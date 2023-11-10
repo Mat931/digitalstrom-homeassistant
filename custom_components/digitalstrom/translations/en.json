@@ -1,0 +1,25 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Device is already configured"
+        },
+        "error": {
+            "cannot_connect": "Failed to connect",
+            "invalid_auth": "Invalid authentication",
+            "invalid_certificate": "Server certificate validation failed",
+            "invalid_fingerprint": "Invalid fingerprint length",
+            "unknown": "Unexpected error"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "host": "Host",
+                    "password": "Password",
+                    "port": "Port",
+                    "ssl": "SHA-256 fingerprint of the server certificate",
+                    "username": "Username"
+                }
+            }
+        }
+    }
+}
