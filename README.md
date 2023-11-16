@@ -22,5 +22,5 @@ This integration allows you to connect your digitalSTROM server (dSS) to Home As
 
    Alternatively you can navigate to `Settings`, `Devices & services`. This integration supports auto discovery and should automatically find your dSS instance.
 2. Enter your username and password.
-3. If you are using a self-signed certificate on the dSS you need to [find out its SHA-256 fingerprint](certificate_fingerprint.md). This fingerprint is used to verify the identity of the server.
+3. If you are using a self-signed certificate on the dSS you need to [find out its SHA-256 fingerprint](https://github.com/Mat931/digitalstrom-hacs/blob/main/certificate_fingerprint.md). This fingerprint is used to verify the identity of the server.
 4. In the next step you can check if the correct areas got assigned to your digitalSTROM devices.
