@@ -7,10 +7,14 @@ import time
 
 import aiohttp
 
-from .const import (EVENT_LISTENER_TIMEOUT, SESSION_TOKEN_TIMEOUT,
-                    SSL_FINGERPRINT_REGEX)
-from .exceptions import (CannotConnect, InvalidAuth, InvalidCertificate,
-                         InvalidFingerprint, ServerError)
+from .const import EVENT_LISTENER_TIMEOUT, SESSION_TOKEN_TIMEOUT, SSL_FINGERPRINT_REGEX
+from .exceptions import (
+    CannotConnect,
+    InvalidAuth,
+    InvalidCertificate,
+    InvalidFingerprint,
+    ServerError,
+)
 
 
 class DigitalstromClient:

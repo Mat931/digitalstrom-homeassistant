@@ -1,7 +1,10 @@
 import logging
 
 from homeassistant.components.binary_sensor import (
-    BinarySensorDeviceClass, BinarySensorEntity, BinarySensorEntityDescription)
+    BinarySensorDeviceClass,
+    BinarySensorEntity,
+    BinarySensorEntityDescription,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
@@ -15,7 +18,7 @@ _LOGGER = logging.getLogger(__name__)
 BINARY_SENSORS_MAP: dict[int, BinarySensorEntityDescription] = {
     -1: BinarySensorEntityDescription(
         key="unknown",
-        name="Unknown",
+        name="Unknown binary input",
     ),
     0: BinarySensorEntityDescription(
         key="0",
@@ -179,6 +182,19 @@ class DigitalstromBinarySensor(BinarySensorEntity, DigitalstromEntity):
         self._attr_name = self.entity_description.name
         self._attr_device_class = self.entity_description.device_class
         self._attr_entity_category = self.entity_description.entity_category
+        self._attr_has_entity_name = True
+        if self.entity_description.key == "unknown":
+            self._attr_name += f" (type {sensor_type})"
+            self._attr_entity_registry_enabled_default = True
+        if self.entity_description.key == "0":
+            self._attr_name = self.device.name
+            self._attr_has_entity_name = False
+            if (
+                (self.index == 0)
+                and (self.device.button is not None)
+                and (not self.device.button_used)
+            ):
+                self._attr_entity_registry_enabled_default = False
 
     def set_state(self, state: bool, raw_state, valid=True):
         self._state = state if valid else None

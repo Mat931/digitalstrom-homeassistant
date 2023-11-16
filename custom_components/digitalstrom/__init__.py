@@ -4,9 +4,14 @@ from __future__ import annotations
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (CONF_HOST, CONF_PORT, CONF_TOKEN,
-                                 EVENT_HOMEASSISTANT_STARTED,
-                                 EVENT_HOMEASSISTANT_STOP, Platform)
+from homeassistant.const import (
+    CONF_HOST,
+    CONF_PORT,
+    CONF_TOKEN,
+    EVENT_HOMEASSISTANT_STARTED,
+    EVENT_HOMEASSISTANT_STOP,
+    Platform,
+)
 from homeassistant.core import CoreState, HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
@@ -14,8 +19,7 @@ from homeassistant.helpers.event import async_track_time_interval
 
 from .api.apartment import DigitalstromApartment
 from .api.client import DigitalstromClient
-from .api.exceptions import (CannotConnect, InvalidAuth, InvalidCertificate,
-                             ServerError)
+from .api.exceptions import CannotConnect, InvalidAuth, InvalidCertificate, ServerError
 from .const import CONF_DSUID, CONF_SSL, DOMAIN, WEBSOCKET_WATCHDOG_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
@@ -65,6 +69,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[DOMAIN].setdefault(entry.data[CONF_DSUID], dict())
         hass.data[DOMAIN][entry.data[CONF_DSUID]]["client"] = client
         hass.data[DOMAIN][entry.data[CONF_DSUID]]["apartment"] = apartment
+        await apartment.get_zones()
         await apartment.get_circuits()
         await apartment.get_devices()
         await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

@@ -10,16 +10,31 @@ import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.components import ssdp, zeroconf
-from homeassistant.const import (CONF_HOST, CONF_PASSWORD, CONF_PORT,
-                                 CONF_TOKEN, CONF_USERNAME)
+from homeassistant.const import (
+    CONF_HOST,
+    CONF_PASSWORD,
+    CONF_PORT,
+    CONF_TOKEN,
+    CONF_USERNAME,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 
 from .api.client import DigitalstromClient
-from .api.exceptions import (CannotConnect, InvalidAuth, InvalidCertificate,
-                             InvalidFingerprint)
-from .const import (CONF_DSUID, CONF_SSL, DEFAULT_HOST, DEFAULT_PORT,
-                    DEFAULT_USERNAME, DOMAIN)
+from .api.exceptions import (
+    CannotConnect,
+    InvalidAuth,
+    InvalidCertificate,
+    InvalidFingerprint,
+)
+from .const import (
+    CONF_DSUID,
+    CONF_SSL,
+    DEFAULT_HOST,
+    DEFAULT_PORT,
+    DEFAULT_USERNAME,
+    DOMAIN,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -101,6 +116,17 @@ class DigitalstromConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             try:
                 info = await validate_input(self.hass, user_input)
                 user_input.update(info)
+                if self._reauth_entry:
+                    entry = self._reauth_entry
+                    self.hass.config_entries.async_update_entry(entry, data=user_input)
+                    # Reload the config entry to notify of updated config
+                    self.hass.async_create_task(
+                        self.hass.config_entries.async_reload(entry.entry_id)
+                    )
+
+                    return self.async_abort(reason="reauth_successful")
+
+                return self.async_create_entry(title=self._name, data=user_input)
             except CannotConnect:
                 errors["base"] = "cannot_connect"
             except InvalidAuth:
@@ -112,18 +138,6 @@ class DigitalstromConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
-
-            if self._reauth_entry:
-                entry = self._reauth_entry
-                self.hass.config_entries.async_update_entry(entry, data=user_input)
-                # Reload the config entry to notify of updated config
-                self.hass.async_create_task(
-                    self.hass.config_entries.async_reload(entry.entry_id)
-                )
-
-                return self.async_abort(reason="reauth_successful")
-
-            return self.async_create_entry(title=self._name, data=user_input)
 
         fields: dict[Any, type] = OrderedDict()
         fields[vol.Required(CONF_HOST, default=self._host or vol.UNDEFINED)] = str

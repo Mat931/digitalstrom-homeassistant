@@ -1,10 +1,14 @@
 import logging
 from typing import Any
 
-from homeassistant.components.light import (ATTR_BRIGHTNESS,
-                                            ATTR_COLOR_TEMP_KELVIN,
-                                            ATTR_HS_COLOR, ATTR_XY_COLOR,
-                                            ColorMode, LightEntity)
+from homeassistant.components.light import (
+    ATTR_BRIGHTNESS,
+    ATTR_COLOR_TEMP_KELVIN,
+    ATTR_HS_COLOR,
+    ATTR_XY_COLOR,
+    ColorMode,
+    LightEntity,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -78,6 +82,8 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
         self.dimmable = self.device.output_dimmable
         self._attr_should_poll = True
         self.last_value = None
+        self.entity_id = f"{DOMAIN}.{self.device.dsuid}_{brightness_channel.index}"
+        self._attr_name = self.device.name
 
         self._attr_supported_color_modes = set()
         if self.dimmable:

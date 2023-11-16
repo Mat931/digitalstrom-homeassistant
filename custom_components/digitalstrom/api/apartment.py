@@ -81,6 +81,7 @@ class DigitalstromDevice:
         self.manufacturer = "digitalSTROM"
         self.zone_id = None
         self.button_used = None
+        self.button_group = 0
         self.available = False
         self.output_dimmable = None
         self.sensors = {}
@@ -133,7 +134,7 @@ class DigitalstromDevice:
                 self.manufacturer = oem_product_url
 
         if zone_id := data.get("zoneID"):
-            self.zone_id = zone_id
+            self.zone_id = int(zone_id)
 
         if meter_dsuid := data.get("meterDSUID"):
             self.meter_dsuid = meter_dsuid
@@ -148,8 +149,11 @@ class DigitalstromDevice:
                 self.button = DigitalstromButton(self)
             elif button_usage in ["auto_unused", "manual_unused"]:
                 self.button_used = False
+                self.button = DigitalstromButton(self)
             else:
                 self.button_used = None
+        if button_group := data.get("buttonGroupMembership"):
+            self.button_group = int(button_group)
 
     def _load_sensors(self, data):
         if sensors := data.get("sensors"):
@@ -264,11 +268,30 @@ class DigitalstromCircuit:
         return data.get("meterValue")
 
 
+class DigitalstromZone:
+    def __init__(self, client: DigitalstromClient, apartment, zone_id: int):
+        self.client = client
+        self.zone_id = zone_id
+        self.apartment = apartment
+        self.name = ""
+        self.group_ids = []
+
+    def load_from_dict(self, data):
+        if "zoneID" in data:
+            zone_id = int(data["zoneID"])
+            if zone_id == self.zone_id:
+                if (name := data.get("name")) and (len(name) > 0):
+                    self.name = name
+                if (group_ids := data.get("groups")) and (len(group_ids) > 0):
+                    self.group_ids = group_ids
+
+
 class DigitalstromApartment:
     def __init__(self, client: DigitalstromClient):
         self.client = client
         self.devices = {}
         self.circuits = {}
+        self.zones = {}
         client.register_event_callback(self.event_callback)
 
     def find_split_devices(self):
@@ -303,6 +326,18 @@ class DigitalstromApartment:
                         self.circuits[dsuid] = circuit
                     self.circuits[dsuid].load_from_dict(d)
         return self.circuits
+
+    async def get_zones(self):
+        data = await self.client.request("apartment/getReachableGroups")
+        if zones := data.get("zones"):
+            for z in zones:
+                if "zoneID" in z:
+                    zone_id = int(z["zoneID"])
+                    if zone_id not in self.zones.keys():
+                        zone = DigitalstromZone(self.client, self, zone_id)
+                        self.zones[zone_id] = zone
+                    self.zones[zone_id].load_from_dict(z)
+        return self.zones
 
     async def event_callback(self, data) -> None:
         if name := data.get("name"):

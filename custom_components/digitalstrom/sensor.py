@@ -1,17 +1,32 @@
 import logging
 
-from homeassistant.components.sensor import (SensorDeviceClass, SensorEntity,
-                                             SensorEntityDescription,
-                                             SensorStateClass)
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
+)
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (CONCENTRATION_PARTS_PER_MILLION, DEGREE,
-                                 LIGHT_LUX, PERCENTAGE, UnitOfApparentPower,
-                                 UnitOfElectricCurrent, UnitOfEnergy,
-                                 UnitOfLength, UnitOfMass, UnitOfPower,
-                                 UnitOfPressure, UnitOfSoundPressure,
-                                 UnitOfSpeed, UnitOfTemperature, UnitOfTime,
-                                 UnitOfVolume, UnitOfVolumeFlowRate,
-                                 UnitOfVolumetricFlux)
+from homeassistant.const import (
+    CONCENTRATION_PARTS_PER_MILLION,
+    DEGREE,
+    LIGHT_LUX,
+    PERCENTAGE,
+    UnitOfApparentPower,
+    UnitOfElectricCurrent,
+    UnitOfEnergy,
+    UnitOfLength,
+    UnitOfMass,
+    UnitOfPower,
+    UnitOfPressure,
+    UnitOfSoundPressure,
+    UnitOfSpeed,
+    UnitOfTemperature,
+    UnitOfTime,
+    UnitOfVolume,
+    UnitOfVolumeFlowRate,
+    UnitOfVolumetricFlux,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -24,7 +39,7 @@ _LOGGER = logging.getLogger(__name__)
 SENSORS_MAP: dict[int, SensorEntityDescription] = {
     -1: SensorEntityDescription(
         key="unknown",
-        name="Unknown sensor type",
+        name="Unknown sensor",
     ),
     4: SensorEntityDescription(
         key="4",
@@ -302,8 +317,10 @@ class DigitalstromSensor(SensorEntity, DigitalstromEntity):
         self.sensor_type = sensor_type
         self.entity_description = SENSORS_MAP.get(sensor_type, SENSORS_MAP[-1])
         self._attr_name = self.entity_description.name
+        self._attr_has_entity_name = True
         if self.entity_description.key == "unknown":
-            self._attr_name += f" {sensor_type}"
+            self._attr_name += f" (type {sensor_type})"
+            self._attr_entity_registry_enabled_default = False
         self._attr_native_unit_of_measurement = (
             self.entity_description.native_unit_of_measurement
         )
@@ -359,6 +376,7 @@ class DigitalstromCircuitSensor(SensorEntity):
         self.entity_id = f"{DOMAIN}.{self.circuit.dsuid}_{identifier}"
         self._state = None
         self.identifier = identifier
+        self._attr_has_entity_name = True
 
         if identifier == "power":
             self._attr_name = "Power"

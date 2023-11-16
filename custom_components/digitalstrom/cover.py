@@ -1,8 +1,11 @@
 import logging
 from typing import Any
 
-from homeassistant.components.cover import (ATTR_POSITION, CoverEntity,
-                                            CoverEntityFeature)
+from homeassistant.components.cover import (
+    ATTR_POSITION,
+    CoverEntity,
+    CoverEntityFeature,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -66,16 +69,17 @@ class DigitalstromCover(CoverEntity, DigitalstromEntity):
             | CoverEntityFeature.SET_POSITION
             | CoverEntityFeature.STOP
         )
-        if position_channel.channel_type == "shadePositionIndoor":
-            self._attr_name = "Indoor Cover"
-        else:
-            self._attr_name = "Cover"
+
         self.position_channel = position_channel
         self.tilt_channel = tilt_channel
         self.device = position_channel.device
         self.client = self.device.client
         self._attr_should_poll = True
         self.last_value = None
+        self.entity_id = f"{DOMAIN}.{self.device.dsuid}_{position_channel.index}"
+        self._attr_name = self.device.name
+        if position_channel.channel_type == "shadePositionIndoor":
+            self._attr_name += " Indoor Cover"
 
     async def async_added_to_hass(self) -> None:
         self.async_on_remove(

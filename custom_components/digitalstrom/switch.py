@@ -34,12 +34,14 @@ async def async_setup_entry(
 class DigitalstromSwitch(SwitchEntity, DigitalstromEntity):
     def __init__(self, channel):
         super().__init__(channel.device, f"O{channel.index}")
-        self._attr_name = channel.channel_name
         self.channel = channel
         self.device = channel.device
         self.client = self.device.client
         self._attr_should_poll = True
         self.last_value = None
+        self._attr_has_entity_name = False
+        self.entity_id = f"{DOMAIN}.{self.device.dsuid}_{channel.index}"
+        self._attr_name = self.device.name
 
     @property
     def is_on(self) -> bool | None:

@@ -1,0 +1,25 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Gerät ist bereits konfiguriert"
+        },
+        "error": {
+            "cannot_connect": "Verbindung fehlgeschlagen",
+            "invalid_auth": "Benutzername oder Passwort ungültig",
+            "invalid_certificate": "Server-Zertifikat konnte nicht validiert werden",
+            "invalid_fingerprint": "Ungültige Fingerabdruck-Länge",
+            "unknown": "Unbekannter Fehler"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "host": "Host",
+                    "password": "Passwort",
+                    "port": "Port",
+                    "ssl": "SHA-256-Fingerabdruck des Server-Zertifikats",
+                    "username": "Benutzername"
+                }
+            }
+        }
+    }
+}

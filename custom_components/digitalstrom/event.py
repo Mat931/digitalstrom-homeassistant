@@ -11,7 +11,7 @@ from .entity import DigitalstromEntity
 
 _LOGGER = logging.getLogger(__name__)
 
-BUTTON_PRESS_TYPES = {
+BUTTON_PRESS_TYPES: dict[int, str] = {
     0: "single_press",
     1: "double_press",
     2: "triple_press",
@@ -25,6 +25,21 @@ BUTTON_PRESS_TYPES = {
     11: "single_press",
     12: "single_press",
     14: "single_press",
+}
+
+GROUP_MAP: dict[int, str] = {
+    1: "Light",
+    2: "Cover",
+    3: "Heating",
+    4: "Audio",
+    5: "Video",
+    8: "Joker",
+    9: "Cooling",
+    10: "Ventilation",
+    11: "Window",
+    12: "Recirculation",
+    13: "Awnings",
+    48: "Temperature Control",
 }
 
 
@@ -48,7 +63,9 @@ class DigitalstromButtonEvent(EventEntity, DigitalstromEntity):
     def __init__(self, button) -> None:
         super().__init__(button.device, "E")
         self.channel = button
-        self._attr_name = "Button"
+        self.group = button.device.button_group
+        self._attr_name = self.device.name
+        self._attr_has_entity_name = False
         self._attr_device_class = EventDeviceClass.BUTTON
         self._attr_event_types = list(
             set(
@@ -57,6 +74,11 @@ class DigitalstromButtonEvent(EventEntity, DigitalstromEntity):
             )
         )
         self.entity_id = f"{DOMAIN}.{self.device.dsuid}"
+        if not self.device.button_used:
+            self._attr_entity_registry_enabled_default = False
+        if self.group not in [0, 255]:
+            group = GROUP_MAP.get(self.group, f"Group {self.group}")
+            self._attr_name += f" ({group})"
 
     @callback
     def update_callback(self, event: str, extra_data: dict = None) -> None:

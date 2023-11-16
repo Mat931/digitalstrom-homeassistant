@@ -23,6 +23,9 @@ class DigitalstromEntity(Entity):
             if self.device.parent_device is None
             else self.device.parent_device
         )
+        zone_name = ""
+        if zone := self.device.apartment.zones.get(self.device.zone_id):
+            zone_name = zone.name
         return DeviceInfo(
             identifiers={(DOMAIN, parent_device.dsuid)},
             name=parent_device.name,
@@ -30,7 +33,7 @@ class DigitalstromEntity(Entity):
             model=parent_device.hw_info,
             # sw_version=parent_device.sw_version,
             via_device=(DOMAIN, parent_device.meter_dsuid),
-            # suggested_area=parent_device.locationName,
+            suggested_area=zone_name,
         )
 
     @property
