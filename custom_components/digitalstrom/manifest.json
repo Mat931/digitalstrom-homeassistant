@@ -6,10 +6,10 @@
   ],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/Mat931/digitalstrom-hacs",
+  "documentation": "https://github.com/Mat931/digitalstrom-homeassistant",
   "homekit": {},
   "iot_class": "local_polling",
-  "issue_tracker": "https://github.com/Mat931/digitalstrom-hacs/issues",
+  "issue_tracker": "https://github.com/Mat931/digitalstrom-homeassistant/issues",
   "requirements": [],
   "ssdp": [
     {

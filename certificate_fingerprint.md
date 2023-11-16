@@ -7,7 +7,7 @@
 6. Click `View Certificate`.
 7. Copy the SHA-256 fingerprint
 
- ![Step 1](https://github.com/Mat931/digitalstrom-hacs/blob/fd364b9245d05c554d8f6c704b481c5dff76183d/images/step1_en.png)
- ![Step 2](https://github.com/Mat931/digitalstrom-hacs/blob/fd364b9245d05c554d8f6c704b481c5dff76183d/images/step2_en.png)
- ![Step 3](https://github.com/Mat931/digitalstrom-hacs/blob/fd364b9245d05c554d8f6c704b481c5dff76183d/images/step3_en.png)
- ![Step 4](https://github.com/Mat931/digitalstrom-hacs/blob/fd364b9245d05c554d8f6c704b481c5dff76183d/images/step4_en.png)
+ ![Step 1](https://github.com/Mat931/digitalstrom-homeassistant/blob/fd364b9245d05c554d8f6c704b481c5dff76183d/images/step1_en.png)
+ ![Step 2](https://github.com/Mat931/digitalstrom-homeassistant/blob/fd364b9245d05c554d8f6c704b481c5dff76183d/images/step2_en.png)
+ ![Step 3](https://github.com/Mat931/digitalstrom-homeassistant/blob/fd364b9245d05c554d8f6c704b481c5dff76183d/images/step3_en.png)
+ ![Step 4](https://github.com/Mat931/digitalstrom-homeassistant/blob/fd364b9245d05c554d8f6c704b481c5dff76183d/images/step4_en.png)
