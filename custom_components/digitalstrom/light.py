@@ -24,7 +24,7 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the event platform."""
+    """Set up the light platform."""
     client = hass.data[DOMAIN][config_entry.data[CONF_DSUID]]["client"]
     apartment = hass.data[DOMAIN][config_entry.data[CONF_DSUID]]["apartment"]
     lights = []

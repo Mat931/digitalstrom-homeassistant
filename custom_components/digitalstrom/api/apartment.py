@@ -287,8 +287,9 @@ class DigitalstromZone:
 
 
 class DigitalstromApartment:
-    def __init__(self, client: DigitalstromClient):
+    def __init__(self, client: DigitalstromClient, system_dsuid: str):
         self.client = client
+        self.dsuid = system_dsuid
         self.devices = {}
         self.circuits = {}
         self.zones = {}

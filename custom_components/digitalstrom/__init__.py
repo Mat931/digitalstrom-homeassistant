@@ -65,7 +65,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     client.set_app_token(entry.data[CONF_TOKEN])
 
     try:
-        apartment = DigitalstromApartment(client)
+        apartment = DigitalstromApartment(client, entry.data[CONF_DSUID])
         hass.data[DOMAIN].setdefault(entry.data[CONF_DSUID], dict())
         hass.data[DOMAIN][entry.data[CONF_DSUID]]["client"] = client
         hass.data[DOMAIN][entry.data[CONF_DSUID]]["apartment"] = apartment

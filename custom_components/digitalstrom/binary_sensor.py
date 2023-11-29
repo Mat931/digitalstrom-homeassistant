@@ -150,7 +150,7 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the sensor platform."""
+    """Set up the binary sensor platform."""
     client = hass.data[DOMAIN][config_entry.data[CONF_DSUID]]["client"]
     apartment = hass.data[DOMAIN][config_entry.data[CONF_DSUID]]["apartment"]
     binary_sensors = []
