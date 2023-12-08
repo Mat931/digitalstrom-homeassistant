@@ -4,6 +4,8 @@ from collections.abc import Callable
 from .client import DigitalstromClient
 from .exceptions import ServerError
 
+INVERTED_BINARY_INPUTS = ["EnOcean single contact (D5-00-01)"]
+
 
 class DigitalstromChannel:
     def __init__(self, device, index):
@@ -39,7 +41,7 @@ class DigitalstromBinaryInputChannel(DigitalstromChannel):
     def __init__(self, device, index, input_type, inverted):
         super().__init__(device, index)
         self.input_type = input_type
-        self.inverted = inverted
+        self.inverted = bool(inverted)
 
 
 class DigitalstromOutputChannel(DigitalstromChannel):
@@ -173,9 +175,13 @@ class DigitalstromDevice:
 
     def _load_binary_inputs(self, data):
         if binary_inputs := data.get("binaryInputs"):
-            inverted = (input_property := data.get("AKMInputProperty")) and (
-                input_property == "inverted"
-            )
+            inverted = False
+            # if (input_property := data.get("AKMInputProperty")) and (
+            #     input_property == "inverted"
+            # ):
+            #     inverted = True
+            if self.hw_info in INVERTED_BINARY_INPUTS:
+                inverted = True
             for index in range(len(binary_inputs)):
                 input_dict = binary_inputs[index]
                 group = input_dict.get("targetGroup")

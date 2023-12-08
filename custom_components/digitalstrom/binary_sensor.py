@@ -218,4 +218,4 @@ class DigitalstromBinarySensor(BinarySensorEntity, DigitalstromEntity):
     @property
     def is_on(self) -> bool:
         """Return the state of the sensor."""
-        return self._state
+        return (not bool(self._state)) if self.inverted else bool(self._state)

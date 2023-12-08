@@ -168,9 +168,7 @@ class DigitalstromClient:
                         if msg.type == aiohttp.WSMsgType.TEXT:
                             self.last_event = time.time()
                             event = json.loads(msg.data)
-                            if name := event.get("name"):
-                                # if event["name"] == "keepWebserviceAlive":
-                                #    print(f"Keepalive: {time.time()}")
+                            if event.get("name"):
                                 for callback in self._event_callbacks:
                                     await callback(event)
                         else:
