@@ -10,6 +10,7 @@
   "homekit": {},
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/Mat931/digitalstrom-homeassistant/issues",
+  "loggers": ["digitalstrom_api"],
   "requirements": [],
   "ssdp": [
     {

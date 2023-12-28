@@ -1,3 +1,4 @@
+import logging
 import re
 from collections.abc import Callable
 
@@ -299,6 +300,7 @@ class DigitalstromApartment:
         self.devices = {}
         self.circuits = {}
         self.zones = {}
+        self.logger = logging.getLogger("digitalstrom_api")
         client.register_event_callback(self.event_callback)
 
     def find_split_devices(self):
@@ -314,6 +316,7 @@ class DigitalstromApartment:
 
     async def get_devices(self):
         data = await self.client.request("apartment/getDevices")
+        self.logger.debug(f"get_devices {data}")
         for d in data:
             if (dsuid := d.get("dSUID")) and (len(dsuid) > 0):
                 if dsuid not in self.devices.keys():
