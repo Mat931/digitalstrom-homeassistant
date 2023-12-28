@@ -11,3 +11,5 @@
  ![Schritt 2](https://github.com/Mat931/digitalstrom-homeassistant/blob/main/images/step2_de.png)
  ![Schritt 3](https://github.com/Mat931/digitalstrom-homeassistant/blob/main/images/step3_de.png)
  ![Schritt 4](https://github.com/Mat931/digitalstrom-homeassistant/blob/main/images/step4_de.png)
+
+Um die Überprüfung des Fingerabdrucks zu umgehen können Sie `ignore` in das Fingerabdruck-Textfeld eingeben.
