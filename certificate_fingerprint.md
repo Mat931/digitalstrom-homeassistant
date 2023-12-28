@@ -11,3 +11,5 @@
  ![Step 2](https://github.com/Mat931/digitalstrom-homeassistant/blob/main/images/step2_en.png)
  ![Step 3](https://github.com/Mat931/digitalstrom-homeassistant/blob/main/images/step3_en.png)
  ![Step 4](https://github.com/Mat931/digitalstrom-homeassistant/blob/main/images/step4_en.png)
+
+If you need to bypass the fingerprint verification you can enter `ignore` into the fingerprint field.
