@@ -45,11 +45,16 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
 
-    client = DigitalstromClient(
-        host=data["host"], port=data["port"], ssl=data.get("ssl", True), loop=hass.loop
-    )
-
     result = {}
+
+    ssl = data.get("ssl", True)
+    if ssl == "ignore":
+        ssl = False
+        result["ssl"] = False
+
+    client = DigitalstromClient(
+        host=data["host"], port=data["port"], ssl=ssl, loop=hass.loop
+    )
 
     result[CONF_DSUID] = await client.get_system_dsuid()
 
@@ -99,6 +104,8 @@ class DigitalstromConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             if self._ssl == "":
                 self._ssl = None
+            if type(self._ssl) is bool and not self._ssl:
+                self._ssl = "ignore"
             if self._dsuid == "":
                 self._dsuid = None
 
