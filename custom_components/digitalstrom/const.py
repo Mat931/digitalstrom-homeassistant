@@ -8,6 +8,7 @@ CONF_SSL: str = "ssl"
 DEFAULT_HOST: str = "dss.local"
 DEFAULT_PORT: int = 8080
 DEFAULT_USERNAME: str = "dssadmin"
+IGNORE_SSL_VERIFICATION = "ignore"
 
 DOMAIN = "digitalstrom"
 

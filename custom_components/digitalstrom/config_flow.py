@@ -34,6 +34,7 @@ from .const import (
     DEFAULT_PORT,
     DEFAULT_USERNAME,
     DOMAIN,
+    IGNORE_SSL_VERIFICATION,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -48,7 +49,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     result = {}
 
     ssl = data.get("ssl", True)
-    if ssl == "ignore":
+    if ssl == IGNORE_SSL_VERIFICATION:
         ssl = False
         result["ssl"] = False
 
@@ -105,7 +106,7 @@ class DigitalstromConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if self._ssl == "":
                 self._ssl = None
             if type(self._ssl) is bool and not self._ssl:
-                self._ssl = "ignore"
+                self._ssl = IGNORE_SSL_VERIFICATION
             if self._dsuid == "":
                 self._dsuid = None
 
@@ -200,6 +201,8 @@ class DigitalstromConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._user = entry_data.get(CONF_USERNAME, self._user)
         self._password = entry_data.get(CONF_PASSWORD, self._password)
         self._ssl = entry_data.get(CONF_SSL, self._ssl)
+        if type(self._ssl) is bool and not self._ssl:
+            self._ssl = IGNORE_SSL_VERIFICATION
         self._dsuid = entry_data.get(CONF_DSUID, self._dsuid)
         self._reauth_entry = entry
 
