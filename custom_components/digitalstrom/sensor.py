@@ -287,8 +287,7 @@ async def async_setup_entry(
     sensors = []
     for device in apartment.devices.values():
         for sensor in device.sensors.values():
-            if sensor.valid:
-                sensors.append(DigitalstromSensor(sensor))
+            sensors.append(DigitalstromSensor(sensor))
     _LOGGER.debug("Adding %i sensors", len(sensors))
     async_add_entities(sensors)
 
@@ -338,6 +337,8 @@ class DigitalstromSensor(SensorEntity, DigitalstromEntity):
         )
 
     def update_callback(self, state, raw_state=None):
+        if state is None:
+            return
         if self.entity_description.key == "72":
             # Water Flow Rate: Convert from L/s to m3/h
             state *= 3.6
