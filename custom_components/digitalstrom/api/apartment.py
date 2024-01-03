@@ -91,7 +91,9 @@ class DigitalstromDevice:
         self.binary_inputs = {}
         self.output_channels = {}
         self.button = None
-        self.meter = None
+        self.meter_dsuid = None
+        self.dsuid_index = None
+        self.oem_part_number = None
         self.parent_device = None
         self.available = False
         self.availability_callbacks = []
@@ -141,6 +143,12 @@ class DigitalstromDevice:
 
         if meter_dsuid := data.get("meterDSUID"):
             self.meter_dsuid = meter_dsuid
+
+        if "dSUIDIndex" in data.keys():
+            self.dsuid_index = data["dSUIDIndex"]
+
+        if "OemPartNumber" in data.keys():
+            self.oem_part_number = data["OemPartNumber"]
 
         if "isPresent" in data.keys():
             self.available = data["isPresent"]
@@ -308,11 +316,21 @@ class DigitalstromApartment:
         for prev, curr in zip(devices, devices[1:]):
             if (
                 int(curr.dsuid, 16) <= int(prev.dsuid, 16) + 0x100
-                and prev.meter == curr.meter
+                and prev.meter_dsuid == curr.meter_dsuid
+                and (
+                    curr.dsuid_index != 0
+                    or (curr.oem_part_number not in [0, 1])
+                    or not (
+                        prev.dsuid_index == curr.dsuid_index
+                        and prev.oem_part_number == curr.oem_part_number
+                    )
+                )
             ):
-                curr.parent_device = (
+                parent_device = (
                     prev if prev.parent_device is None else prev.parent_device
                 )
+                curr.parent_device = parent_device
+                self.logger.debug(f"Merging devices {parent_device.dsuid} {curr.dsuid}")
 
     async def get_devices(self):
         data = await self.client.request("apartment/getDevices")
