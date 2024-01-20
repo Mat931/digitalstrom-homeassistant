@@ -81,6 +81,13 @@ class DigitalstromCover(CoverEntity, DigitalstromEntity):
         self._attr_name = self.device.name
         if position_channel.channel_type == "shadePositionIndoor":
             self._attr_name += " Indoor Cover"
+        if self.tilt_channel is not None:
+            self._attr_supported_features |= (
+                CoverEntityFeature.OPEN_TILT
+                | CoverEntityFeature.CLOSE_TILT
+                | CoverEntityFeature.STOP_TILT
+                | CoverEntityFeature.SET_TILT_POSITION
+            )
 
     async def async_added_to_hass(self) -> None:
         self.async_on_remove(
