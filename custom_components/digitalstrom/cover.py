@@ -3,6 +3,7 @@ from typing import Any
 
 from homeassistant.components.cover import (
     ATTR_POSITION,
+    ATTR_TILT_POSITION,
     CoverEntity,
     CoverEntityFeature,
 )
