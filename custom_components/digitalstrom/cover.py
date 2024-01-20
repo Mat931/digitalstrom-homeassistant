@@ -75,7 +75,8 @@ class DigitalstromCover(CoverEntity, DigitalstromEntity):
         self.device = position_channel.device
         self.client = self.device.client
         self._attr_should_poll = True
-        self.last_value = None
+        self.last_position = None
+        self.last_tilt = None
         self.entity_id = f"{DOMAIN}.{self.device.dsuid}_{position_channel.index}"
         self._attr_name = self.device.name
         if position_channel.channel_type == "shadePositionIndoor":
@@ -93,16 +94,22 @@ class DigitalstromCover(CoverEntity, DigitalstromEntity):
         # self.device.client.unregister_event_callback(self.event_callback)
         pass
 
+    async def async_open_cover(self, **kwargs: Any) -> None:
+        """Open cover."""
+        await self.client.request(
+            f"device/setOutputChannelValue?dsuid={self.device.dsuid}&channelvalues={self.position_channel.channel_id}=100&applyNow=1"
+        )
+
     async def async_close_cover(self, **kwargs: Any) -> None:
         """Close cover."""
         await self.client.request(
             f"device/setOutputChannelValue?dsuid={self.device.dsuid}&channelvalues={self.position_channel.channel_id}=0&applyNow=1"
         )
 
-    async def async_open_cover(self, **kwargs: Any) -> None:
-        """Open cover."""
+    async def async_stop_cover(self, **kwargs: Any) -> None:
+        """Stop cover."""
         await self.client.request(
-            f"device/setOutputChannelValue?dsuid={self.device.dsuid}&channelvalues={self.position_channel.channel_id}=100&applyNow=1"
+            f"device/callScene?dsuid={self.device.dsuid}&sceneNumber=15"
         )
 
     async def async_set_cover_position(self, **kwargs: Any) -> None:
@@ -112,29 +119,59 @@ class DigitalstromCover(CoverEntity, DigitalstromEntity):
             f"device/setOutputChannelValue?dsuid={self.device.dsuid}&channelvalues={self.position_channel.channel_id}={position}&applyNow=1"
         )
 
-    async def async_stop_cover(self, **kwargs: Any) -> None:
-        """Stop cover."""
-        await self.client.request(
-            f"device/callScene?dsuid={self.device.dsuid}&sceneNumber=15"
-        )
+    async def async_open_cover_tilt(self, **kwargs: Any) -> None:
+        """Open the cover tilt."""
+        if self.tilt_channel is not None:
+            await self.client.request(
+                f"device/setOutputChannelValue?dsuid={self.device.dsuid}&channelvalues={self.tilt_channel.channel_id}=100&applyNow=1"
+            )
+
+    async def async_close_cover_tilt(self, **kwargs: Any) -> None:
+        """Close the cover tilt."""
+        if self.tilt_channel is not None:
+            await self.client.request(
+                f"device/setOutputChannelValue?dsuid={self.device.dsuid}&channelvalues={self.tilt_channel.channel_id}=0&applyNow=1"
+            )
+
+    async def async_stop_cover_tilt(self, **kwargs: Any) -> None:
+        """Stop the cover tilt."""
+        if self.tilt_channel is not None:
+            await self.client.request(
+                f"device/callScene?dsuid={self.device.dsuid}&sceneNumber=15"
+            )
+
+    async def async_set_cover_tilt_position(self, **kwargs: Any) -> None:
+        """Move the cover tilt to a specific position."""
+        if self.tilt_channel is not None:
+            tilt = kwargs[ATTR_TILT_POSITION]
+            await self.client.request(
+                f"device/setOutputChannelValue?dsuid={self.device.dsuid}&channelvalues={self.tilt_channel.channel_id}={tilt}&applyNow=1"
+            )
 
     async def async_update(self, **kwargs: Any):
         try:
             result = await self.client.request(
                 f"property/getFloating?path=/apartment/zones/zone{self.device.zone_id}/devices/{self.device.dsuid}/status/outputs/{self.position_channel.channel_id}/targetValue"
             )
-            self.last_value = result.get("value", None)
+            self.last_position = result.get("value", None)
         except ServerError:
-            self.last_value = None
+            self.last_position = None
+        if self.tilt_channel is not None:
+            try:
+                result = await self.client.request(
+                    f"property/getFloating?path=/apartment/zones/zone{self.device.zone_id}/devices/{self.device.dsuid}/status/outputs/{self.tilt_channel.channel_id}/targetValue"
+                )
+                self.last_tilt = result.get("value", None)
+            except ServerError:
+                self.last_tilt = None
 
     @property
     def current_cover_position(self) -> int | None:
         """Return current position of cover.
 
         None is unknown, 0 is closed, 100 is fully open.
-
-        return self.device.level"""
-        return self.last_value
+        """
+        return self.last_position
 
     @property
     def is_closed(self) -> bool | None:
@@ -145,7 +182,34 @@ class DigitalstromCover(CoverEntity, DigitalstromEntity):
         Allow small calibration errors (some devices after a long time
         become not well calibrated)."""
 
-        if self.last_value is None:
+        if self.last_position is None:
             return None
 
-        return self.last_value < 5
+        return self.last_position < 5
+
+    @property
+    def current_cover_tilt_position(self) -> int | None:
+        """Return current position of cover tilt.
+
+        None is unknown, 0 is closed, 100 is fully open.
+        """
+        return self.last_tilt
+
+    @property
+    def _fully_open_tilt(self) -> int:
+        """Return value that represents fully opened tilt."""
+        return None if self.tilt_channel is None else 100
+
+    @property
+    def _fully_closed_tilt(self) -> int:
+        """Return value that represents fully closed tilt."""
+        return None if self.tilt_channel is None else 0
+
+    @property
+    def _tilt_range(self) -> int:
+        """Return range between fully opened and fully closed tilt."""
+        return (
+            None
+            if self.tilt_channel is None
+            else self._fully_open_tilt - self._fully_closed_tilt
+        )
