@@ -136,8 +136,8 @@ class DigitalstromClient:
             self.last_request < time.time() - SESSION_TOKEN_TIMEOUT
         ):
             self._session_token = await self._request_session_token()
-        self.last_request = time.time()
         data = await self._request_raw(url, dict(token=self._session_token))
+        self.last_request = time.time()
         return data
 
     def register_event_callback(self, callback: callable):
