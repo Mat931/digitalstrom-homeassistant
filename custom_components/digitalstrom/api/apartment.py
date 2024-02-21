@@ -369,6 +369,7 @@ class DigitalstromApartment:
 
     async def event_callback(self, data) -> None:
         if name := data.get("name"):
+            self.logger.debug(f"event {data}")
             if name == "deviceSensorValue":
                 dsuid = data["source"]["dsid"]
                 index = int(data["properties"]["sensorIndex"])
