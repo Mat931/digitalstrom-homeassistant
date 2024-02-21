@@ -85,18 +85,20 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
         self.entity_id = f"{DOMAIN}.{self.device.dsuid}_{brightness_channel.index}"
         self._attr_name = self.device.name
 
-        self._attr_supported_color_modes = set()
+        color_modes = []
         if self.dimmable:
             if self.x_channel is not None and self.y_channel is not None:
-                self._attr_supported_color_modes.add(ColorMode.XY)
+                color_modes.append(ColorMode.XY)
             elif self.hue_channel is not None and self.saturation_channel is not None:
-                self._attr_supported_color_modes.add(ColorMode.HS)
+                color_modes.append(ColorMode.HS)
             if self.color_temp_channel is not None:
-                self._attr_supported_color_modes.add(ColorMode.COLOR_TEMP)
-            if len(self._attr_supported_color_modes) == 0:
-                self._attr_supported_color_modes.add(ColorMode.BRIGHTNESS)
+                color_modes.append(ColorMode.COLOR_TEMP)
+            if len(color_modes) == 0:
+                color_modes.append(ColorMode.BRIGHTNESS)
         else:
-            self._attr_supported_color_modes.add(ColorMode.ONOFF)
+            color_modes.append(ColorMode.ONOFF)
+        self._attr_supported_color_modes = set(color_modes)
+        self._attr_color_mode = color_modes[0]
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
