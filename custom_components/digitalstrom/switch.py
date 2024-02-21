@@ -9,6 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .api.exceptions import ServerError
 from .const import CONF_DSUID, DOMAIN
 from .entity import DigitalstromEntity
 
@@ -78,6 +79,7 @@ class DigitalstromSwitch(SwitchEntity, DigitalstromEntity):
         self._attr_has_entity_name = False
         self.entity_id = f"{DOMAIN}.{self.device.dsuid}_{channel.index}"
         self._attr_name = self.device.name
+        self.supports_target_value = True
 
     @property
     def is_on(self) -> bool | None:
@@ -99,10 +101,15 @@ class DigitalstromSwitch(SwitchEntity, DigitalstromEntity):
         )
 
     async def async_update(self, **kwargs: Any):
-        result = await self.client.request(
-            f"property/getFloating?path=/apartment/zones/zone{self.device.zone_id}/devices/{self.device.dsuid}/status/outputs/powerState/targetValue"
-        )
-        self.last_value = result.get("value", None)
+        if not self.supports_target_value:
+            return
+        try:
+            result = await self.client.request(
+                f"property/getFloating?path=/apartment/zones/zone{self.device.zone_id}/devices/{self.device.dsuid}/status/outputs/powerState/targetValue"
+            )
+            self.last_value = result.get("value", None)
+        except ServerError:
+            self.supports_target_value = False
 
 
 class DigitalstromApartmentScene(SwitchEntity):
