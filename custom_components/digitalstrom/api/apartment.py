@@ -54,8 +54,11 @@ class DigitalstromOutputChannel(DigitalstromChannel):
 
     async def get_value(self):
         try:
+            dsuid_suffix = ""
+            if self.device.hw_info == "IC ST-DIM300":
+                dsuid_suffix = "[0]"
             result = await self.device.client.request(
-                f"property/getFloating?path=/apartment/zones/zone{self.device.zone_id}/devices/{self.device.dsuid}/status/outputs/{self.channel_id}/targetValue"
+                f"property/getFloating?path=/apartment/zones/zone{self.device.zone_id}/devices/{self.device.dsuid}{dsuid_suffix}/status/outputs/{self.channel_id}/targetValue"
             )
             return result.get("value", None)
         except ServerError:
