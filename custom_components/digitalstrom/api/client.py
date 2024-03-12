@@ -4,6 +4,7 @@ import json
 import re
 import socket
 import time
+import urllib.parse
 
 import aiohttp
 
@@ -98,13 +99,16 @@ class DigitalstromClient:
         self, username: str, password: str, application_name: str = "Home Assistant"
     ) -> str:
         # Register a new app token
+        username_safe = urllib.parse.quote(username)
+        password_safe = urllib.parse.quote(password)
+        application_name_safe = urllib.parse.quote(application_name)
         self._app_token = None
         data = await self._request_raw(
-            f"system/requestApplicationToken?applicationName={application_name}"
+            f"system/requestApplicationToken?applicationName={application_name_safe}"
         )
         if app_token := data.get("applicationToken"):
             data = await self._request_raw(
-                f"system/login?user={username}&password={password}"
+                f"system/login?user={username_safe}&password={password_safe}"
             )
             if token := data.get("token"):
                 await self._request_raw(
@@ -115,8 +119,10 @@ class DigitalstromClient:
 
     async def test_login(self, username: str, password: str) -> bool:
         # Check if the username and password are correct
+        username_safe = urllib.parse.quote(username)
+        password_safe = urllib.parse.quote(password)
         data = await self._request_raw(
-            f"system/login?user={username}&password={password}"
+            f"system/login?user={username_safe}&password={password_safe}"
         )
         return "token" in data.keys()
 
