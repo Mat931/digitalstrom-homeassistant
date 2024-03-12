@@ -10,6 +10,7 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .api.channel import DigitalstromBinaryInputChannel
 from .const import CONF_DSUID, DOMAIN
 from .entity import DigitalstromEntity
 
@@ -162,7 +163,7 @@ async def async_setup_entry(
 
 
 class DigitalstromBinarySensor(BinarySensorEntity, DigitalstromEntity):
-    def __init__(self, binary_input_channel):
+    def __init__(self, binary_input_channel: DigitalstromBinaryInputChannel):
         super().__init__(binary_input_channel.device, f"S{binary_input_channel.index}")
         self._attributes: dict[str, Any] = {}
         self._state: int | None = None
@@ -174,7 +175,7 @@ class DigitalstromBinarySensor(BinarySensorEntity, DigitalstromEntity):
         self._attr_suggested_display_precision = 1
         self.entity_id = f"{DOMAIN}.{self.device.dsuid}_{self.index}"
 
-    def set_type(self, sensor_type):
+    def set_type(self, sensor_type: int) -> None:
         self.sensor_type = sensor_type
         self.entity_description = BINARY_SENSORS_MAP.get(
             sensor_type, BINARY_SENSORS_MAP[-1]
@@ -196,18 +197,13 @@ class DigitalstromBinarySensor(BinarySensorEntity, DigitalstromEntity):
             ):
                 self._attr_entity_registry_enabled_default = False
 
-    def set_state(self, state: bool, raw_state, valid=True):
-        self._state = state if valid else None
-        self.valid = valid
-        self.async_write_ha_state()
-
     async def async_added_to_hass(self) -> None:
         self.update_callback(self.channel.last_state)
         self.async_on_remove(
             self.channel.register_update_callback(self.update_callback)
         )
 
-    def update_callback(self, state, raw_state=None):
+    def update_callback(self, state: bool, raw_state: int = None) -> None:
         self._state = state
         self.async_write_ha_state()
 

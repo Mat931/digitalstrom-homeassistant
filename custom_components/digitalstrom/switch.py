@@ -9,6 +9,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .api.apartment import DigitalstromApartment
+from .api.channel import DigitalstromOutputChannel
 from .api.exceptions import ServerError
 from .const import CONF_DSUID, DOMAIN
 from .entity import DigitalstromEntity
@@ -69,7 +71,7 @@ async def async_setup_entry(
 
 
 class DigitalstromSwitch(SwitchEntity, DigitalstromEntity):
-    def __init__(self, channel):
+    def __init__(self, channel: DigitalstromOutputChannel):
         super().__init__(channel.device, f"O{channel.index}")
         self.channel = channel
         self.device = channel.device
@@ -100,7 +102,7 @@ class DigitalstromSwitch(SwitchEntity, DigitalstromEntity):
             f"device/setOutputChannelValue?dsuid={self.device.dsuid}&channelvalues={self.channel.channel_id}=0&applyNow=1"
         )
 
-    async def async_update(self, **kwargs: Any):
+    async def async_update(self, **kwargs: Any) -> None:
         if not self.supports_target_value:
             return
         try:
@@ -113,7 +115,9 @@ class DigitalstromSwitch(SwitchEntity, DigitalstromEntity):
 
 
 class DigitalstromApartmentScene(SwitchEntity):
-    def __init__(self, apartment, scene_id, scene_name):
+    def __init__(
+        self, apartment: DigitalstromApartment, scene_id: int, scene_name: str
+    ):
         self.scene_id = scene_id
         self.scene_name = scene_name
         self.apartment = apartment

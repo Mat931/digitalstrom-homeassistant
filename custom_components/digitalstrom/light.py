@@ -13,6 +13,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .api.channel import DigitalstromOutputChannel
 from .const import CONF_DSUID, DOMAIN
 from .entity import DigitalstromEntity
 
@@ -61,12 +62,12 @@ async def async_setup_entry(
 class DigitalstromLight(LightEntity, DigitalstromEntity):
     def __init__(
         self,
-        brightness_channel,
-        color_temp_channel=None,
-        hue_channel=None,
-        saturation_channel=None,
-        x_channel=None,
-        y_channel=None,
+        brightness_channel: DigitalstromOutputChannel,
+        color_temp_channel: DigitalstromOutputChannel = None,
+        hue_channel: DigitalstromOutputChannel = None,
+        saturation_channel: DigitalstromOutputChannel = None,
+        x_channel: DigitalstromOutputChannel = None,
+        y_channel: DigitalstromOutputChannel = None,
     ):
         super().__init__(brightness_channel.device, f"O{brightness_channel.index}")
 
@@ -137,7 +138,7 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
             f"device/setOutputChannelValue?dsuid={self.device.dsuid}&channelvalues={self.brightness_channel.channel_id}=0&applyNow=1"
         )
 
-    async def async_update(self, **kwargs: Any):
+    async def async_update(self, **kwargs: Any) -> None:
         self.last_value = await self.brightness_channel.get_value()
 
     @property

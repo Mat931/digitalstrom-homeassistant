@@ -11,6 +11,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .api.channel import DigitalstromOutputChannel
 from .api.exceptions import ServerError
 from .const import CONF_DSUID, DOMAIN
 from .entity import DigitalstromEntity
@@ -62,7 +63,11 @@ async def async_setup_entry(
 
 
 class DigitalstromCover(CoverEntity, DigitalstromEntity):
-    def __init__(self, position_channel, tilt_channel=None):
+    def __init__(
+        self,
+        position_channel: DigitalstromOutputChannel,
+        tilt_channel: DigitalstromOutputChannel = None,
+    ):
         super().__init__(position_channel.device, f"O{position_channel.index}")
         self._attr_supported_features = (
             CoverEntityFeature.OPEN
@@ -95,7 +100,7 @@ class DigitalstromCover(CoverEntity, DigitalstromEntity):
             self.position_channel.register_update_callback(self.update_callback)
         )
 
-    def update_callback(self, state, raw_state=None):
+    def update_callback(self, state, raw_state=None) -> None:
         pass
 
     async def async_will_remove_from_hass(self) -> None:
@@ -156,7 +161,7 @@ class DigitalstromCover(CoverEntity, DigitalstromEntity):
                 f"device/setOutputChannelValue?dsuid={self.device.dsuid}&channelvalues={self.tilt_channel.channel_id}={tilt}&applyNow=1"
             )
 
-    async def async_update(self, **kwargs: Any):
+    async def async_update(self, **kwargs: Any) -> None:
         try:
             result = await self.client.request(
                 f"property/getFloating?path=/apartment/zones/zone{self.device.zone_id}/devices/{self.device.dsuid}/status/outputs/{self.position_channel.channel_id}/targetValue"

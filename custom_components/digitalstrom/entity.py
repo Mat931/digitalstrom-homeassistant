@@ -1,6 +1,6 @@
 from homeassistant.helpers.entity import DeviceInfo, Entity
 
-from .api.apartment import DigitalstromDevice
+from .api.device import DigitalstromDevice
 from .const import DOMAIN
 
 

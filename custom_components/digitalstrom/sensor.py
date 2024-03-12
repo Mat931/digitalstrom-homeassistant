@@ -31,6 +31,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .api.channel import DigitalstromSensorChannel
+from .api.circuit import DigitalstromCircuit
 from .const import CONF_DSUID, DOMAIN
 from .entity import DigitalstromEntity
 
@@ -301,7 +303,7 @@ async def async_setup_entry(
 
 
 class DigitalstromSensor(SensorEntity, DigitalstromEntity):
-    def __init__(self, sensor_channel):
+    def __init__(self, sensor_channel: DigitalstromSensorChannel):
         super().__init__(sensor_channel.device, f"S{sensor_channel.index}")
         self._attributes: dict[str, Any] = {}
         self._state: int | None = None
@@ -312,7 +314,7 @@ class DigitalstromSensor(SensorEntity, DigitalstromEntity):
         self._attr_suggested_display_precision = 1
         self.entity_id = f"{DOMAIN}.{self.device.dsuid}_{self.index}"
 
-    def set_type(self, sensor_type):
+    def set_type(self, sensor_type: int) -> None:
         self.sensor_type = sensor_type
         self.entity_description = SENSORS_MAP.get(sensor_type, SENSORS_MAP[-1])
         self._attr_name = self.entity_description.name
@@ -326,17 +328,13 @@ class DigitalstromSensor(SensorEntity, DigitalstromEntity):
         self._attr_device_class = self.entity_description.device_class
         self._attr_state_class = self.entity_description.state_class
 
-    def set_state(self, state, valid=True):
-        self._state = state if valid else None
-        self.valid = valid
-
     async def async_added_to_hass(self) -> None:
         self.update_callback(self.channel.last_state)
         self.async_on_remove(
             self.channel.register_update_callback(self.update_callback)
         )
 
-    def update_callback(self, state, raw_state=None):
+    def update_callback(self, state: float, raw_state: float = None) -> None:
         if state is None:
             return
         if self.entity_description.key == "72":
@@ -349,15 +347,6 @@ class DigitalstromSensor(SensorEntity, DigitalstromEntity):
         # self.device.client.unregister_event_callback(self.event_callback)
         pass
 
-    def on_sensor_update(self, dsuid, index, sensor_type, value, raw_value) -> None:
-        if (
-            dsuid == self.device.dsuid
-            and sensor_type == self.sensor_type
-            and index == self.index
-        ):
-            self._state = value
-            self._attr_native_value = value
-
     @property
     def native_value(self) -> str:
         """Return the state of the sensor."""
@@ -365,7 +354,7 @@ class DigitalstromSensor(SensorEntity, DigitalstromEntity):
 
 
 class DigitalstromCircuitSensor(SensorEntity):
-    def __init__(self, circuit, identifier):
+    def __init__(self, circuit: DigitalstromCircuit, identifier: str):
         self.circuit = circuit
         self._attr_unique_id: str = f"{self.circuit.dsuid}_{identifier}"
         self.entity_id = f"{DOMAIN}.{self._attr_unique_id}"
