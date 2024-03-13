@@ -13,6 +13,12 @@ class DigitalstromApartment:
         self.logger = logging.getLogger("digitalstrom_api")
         client.register_event_callback(self.event_callback)
 
+    async def call_scene(self, scene: int):
+        await self.client.request(f"apartment/callScene?sceneNumber={scene}")
+
+    async def undo_scene(self, scene: int):
+        await self.client.request(f"apartment/undoScene?sceneNumber={scene}")
+
     def find_split_devices(self):
         devices = sorted(self.devices.values(), key=lambda x: int(x.dsuid, 16))
         for prev, curr in zip(devices, devices[1:]):
@@ -34,7 +40,7 @@ class DigitalstromApartment:
                 curr.parent_device = parent_device
                 self.logger.debug(f"Merging devices {parent_device.dsuid} {curr.dsuid}")
 
-    async def get_devices(self):
+    async def get_devices(self) -> dict:
         data = await self.client.request("apartment/getDevices")
         self.logger.debug(f"get_devices {data}")
         for d in data:
@@ -48,7 +54,7 @@ class DigitalstromApartment:
         self.find_split_devices()
         return self.devices
 
-    async def get_circuits(self):
+    async def get_circuits(self) -> dict:
         data = await self.client.request("apartment/getCircuits")
         if circuits := data.get("circuits"):
             for d in circuits:
@@ -61,7 +67,7 @@ class DigitalstromApartment:
                     self.circuits[dsuid].load_from_dict(d)
         return self.circuits
 
-    async def get_zones(self):
+    async def get_zones(self) -> dict:
         data = await self.client.request("apartment/getReachableGroups")
         if zones := data.get("zones"):
             for z in zones:
@@ -158,3 +164,6 @@ class DigitalstromApartment:
                 ):
                     for channel in device.output_channels.values():
                         channel.update("timeout")
+            elif name == "apartmentProxyStateChanged":
+                # TODO: Update all output channels
+                pass

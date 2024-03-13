@@ -126,7 +126,7 @@ class DigitalstromClient:
         )
         return "token" in data.keys()
 
-    def set_app_token(self, app_token: str):
+    def set_app_token(self, app_token: str) -> None:
         # Re-use the app token from a previous login, returned by request_app_token
         self._app_token = app_token
 
@@ -146,16 +146,16 @@ class DigitalstromClient:
         self.last_request = time.time()
         return data
 
-    def register_event_callback(self, callback: callable):
+    def register_event_callback(self, callback: callable) -> None:
         # Register an event callback
         self._event_callbacks.append(callback)
 
-    def unregister_event_callback(self, callback: callable):
+    def unregister_event_callback(self, callback: callable) -> None:
         # Unregister an event callback
         if callback in self._event_callbacks:
             self._event_callbacks.remove(callback)
 
-    async def start_event_listener(self):
+    async def start_event_listener(self) -> None:
         # Start the event listener
         # Previous login via request_app_token or set_app_token is required
         if self._ws is not None:
@@ -187,13 +187,13 @@ class DigitalstromClient:
         except aiohttp.ClientError as e:
             raise CannotConnect(e) from None
 
-    async def stop_event_listener(self):
+    async def stop_event_listener(self) -> None:
         # Stop the event listener
         if self._ws is not None:
             await self._ws.close()
             self._ws = None
 
-    def event_listener_connected(self):
+    def event_listener_connected(self) -> bool:
         # Check if the event listener is connected
         return (
             (self._ws is not None)
@@ -204,7 +204,7 @@ class DigitalstromClient:
             )
         )
 
-    async def event_listener_watchdog(self, time):
+    async def event_listener_watchdog(self, time) -> None:
         # Restart the event listener if it's not running
         if not self.event_listener_connected():
             try:

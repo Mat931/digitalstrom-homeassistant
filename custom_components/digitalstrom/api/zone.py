@@ -12,7 +12,17 @@ class DigitalstromZone:
         self.name = ""
         self.group_ids = []
 
-    def load_from_dict(self, data):
+    async def call_scene(self, scene: int) -> None:
+        await self.client.request(
+            f"zone/callScene?id={self.zone_id}&sceneNumber={scene}"
+        )
+
+    async def undo_scene(self, scene: int) -> None:
+        await self.client.request(
+            f"zone/undoScene?id={self.zone_id}&sceneNumber={scene}"
+        )
+
+    def load_from_dict(self, data: dict) -> None:
         if "zoneID" in data:
             zone_id = int(data["zoneID"])
             if zone_id == self.zone_id:

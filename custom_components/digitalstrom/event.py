@@ -5,7 +5,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .api.channel import DigitalstromButton
+from .api.channel import DigitalstromButtonChannel
 from .const import CONF_DSUID, DOMAIN
 from .entity import DigitalstromEntity
 
@@ -60,7 +60,7 @@ async def async_setup_entry(
 
 
 class DigitalstromButtonEvent(EventEntity, DigitalstromEntity):
-    def __init__(self, button: DigitalstromButton) -> None:
+    def __init__(self, button: DigitalstromButtonChannel) -> None:
         super().__init__(button.device, "E")
         self.channel = button
         self.group = button.device.button_group

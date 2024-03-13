@@ -104,39 +104,37 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
 
-        channel_values = []
+        self.device.output_channels_clear_prepared_values()
+        binary_light = True
 
         if (brightness := kwargs.get(ATTR_BRIGHTNESS)) is not None:
-            brightness = brightness / 255 * 100
-            channel_values.append(f"{self.brightness_channel.channel_id}={brightness}")
+            self.brightness_channel.prepare_value(brightness / 255 * 100)
+            binary_light = False
 
         if (color_temp_k := kwargs.get(ATTR_COLOR_TEMP_KELVIN)) is not None:
-            color_temp = 1000000.0 / color_temp_k
-            channel_values.append(f"{self.color_temp_channel.channel_id}={color_temp}")
+            self.color_temp_channel.prepare_value(1000000.0 / color_temp_k)
+            binary_light = False
 
         if (xy_color := kwargs.get(ATTR_XY_COLOR)) is not None:
             color_x, color_y = xy_color
-            channel_values.append(f"{self.x_channel.channel_id}={color_x}")
-            channel_values.append(f"{self.y_channel.channel_id}={color_y}")
+            self.x_channel.prepare_value(color_x)
+            self.y_channel.prepare_value(color_y)
+            binary_light = False
 
         if (hs_color := kwargs.get(ATTR_HS_COLOR)) is not None:
             hue, saturation = hs_color
-            channel_values.append(f"{self.hue_channel.channel_id}={hue}")
-            channel_values.append(f"{self.saturation_channel.channel_id}={saturation}")
+            self.hue_channel.prepare_value(hue)
+            self.saturation_channel.prepare_value(saturation)
+            binary_light = False
 
-        if len(channel_values) == 0:
-            channel_values.append(f"{self.brightness_channel.channel_id}=100")
+        if binary_light:
+            self.brightness_channel.prepare_value(100)
 
-        channel_values_str = ";".join(channel_values)
-        await self.client.request(
-            f"device/setOutputChannelValue?dsuid={self.device.dsuid}&channelvalues={channel_values_str}&applyNow=1"
-        )
+        await self.device.output_channels_set_prepared_values()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
-        await self.client.request(
-            f"device/setOutputChannelValue?dsuid={self.device.dsuid}&channelvalues={self.brightness_channel.channel_id}=0&applyNow=1"
-        )
+        await self.brightness_channel.set_value(0)
 
     async def async_update(self, **kwargs: Any) -> None:
         self.last_value = await self.brightness_channel.get_value()

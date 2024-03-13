@@ -11,11 +11,11 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .api.apartment import DigitalstromApartment
 from .api.channel import DigitalstromOutputChannel
-from .api.exceptions import ServerError
 from .const import CONF_DSUID, DOMAIN
 from .entity import DigitalstromEntity
 
 _LOGGER = logging.getLogger(__name__)
+
 
 APARTMENT_SCENES: dict[int, str] = {
     64: "Auto Standby",
@@ -77,7 +77,7 @@ class DigitalstromSwitch(SwitchEntity, DigitalstromEntity):
         self.device = channel.device
         self.client = self.device.client
         self._attr_should_poll = True
-        self.last_value = None
+        self.last_power_state = None
         self._attr_has_entity_name = False
         self.entity_id = f"{DOMAIN}.{self.device.dsuid}_{channel.index}"
         self._attr_name = self.device.name
@@ -86,32 +86,20 @@ class DigitalstromSwitch(SwitchEntity, DigitalstromEntity):
     @property
     def is_on(self) -> bool | None:
         """Return true if the switch is on."""
-        if self.last_value is None:
+        if self.last_power_state is None:
             return None
-        return self.last_value > 0
+        return self.last_power_state > 0
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
-        await self.client.request(
-            f"device/setOutputChannelValue?dsuid={self.device.dsuid}&channelvalues={self.channel.channel_id}=100&applyNow=1"
-        )
+        await self.channel.set_value(100)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
-        await self.client.request(
-            f"device/setOutputChannelValue?dsuid={self.device.dsuid}&channelvalues={self.channel.channel_id}=0&applyNow=1"
-        )
+        await self.channel.set_value(0)
 
     async def async_update(self, **kwargs: Any) -> None:
-        if not self.supports_target_value:
-            return
-        try:
-            result = await self.client.request(
-                f"property/getFloating?path=/apartment/zones/zone{self.device.zone_id}/devices/{self.device.dsuid}/status/outputs/powerState/targetValue"
-            )
-            self.last_value = result.get("value", None)
-        except ServerError:
-            self.supports_target_value = False
+        self.last_power_state = await self.device.get_power_state()
 
 
 class DigitalstromApartmentScene(SwitchEntity):
@@ -129,11 +117,11 @@ class DigitalstromApartmentScene(SwitchEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
-        await self.client.request(f"apartment/callScene?sceneNumber={self.scene_id}")
+        self.apartment.call_scene(self.scene_id)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
-        await self.client.request(f"apartment/undoScene?sceneNumber={self.scene_id}")
+        self.apartment.undo_scene(self.scene_id)
 
     @property
     def device_info(self) -> dict:

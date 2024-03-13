@@ -19,8 +19,9 @@ class DigitalstromCircuit:
         self.has_metering = False
         self.has_metering_producer = False
         self.has_blinking = False
+        self.sensors = {}
 
-    def load_from_dict(self, data: dict):
+    def load_from_dict(self, data: dict) -> None:
         if (dsuid := data.get("dSUID")) and (dsuid == self.dsuid):
             if (name := data.get("name")) and (len(name) > 0):
                 self.name = name
@@ -34,23 +35,20 @@ class DigitalstromCircuit:
                 self.sw_version = sw_version
             if "isPresent" in data.keys():
                 self.available = data["isPresent"]
-            if "hasMetering" in data.keys():
-                self.has_metering = data["hasMetering"]
-            if "hasMeteringProducerEnabled" in data.keys():
-                self.has_metering_producer = data["hasMeteringProducerEnabled"]
             if "hasBlinking" in data.keys():
                 self.has_blinking = data["hasBlinking"]
+            self._load_sensors(data)
 
-    async def get_power(self):
-        # Unit: Watt
-        if not self.has_metering:
-            return None
-        data = await self.client.request(f"circuit/getConsumption?id={self.dsid}")
-        return data.get("consumption")
+    def _load_sensors(self, data: dict) -> None:
+        if "hasMetering" in data.keys():
+            self.has_metering = data["hasMetering"]
+        if "hasMeteringProducerEnabled" in data.keys():
+            self.has_metering_producer = data["hasMeteringProducerEnabled"]
+        if self.has_metering:
+            for identifier in ["power", "energy"]:
+                if identifier not in self.sensors.keys():
+                    from .channel import DigitalstromMeterSensorChannel
 
-    async def get_energy(self):
-        # Unit: Watt seconds
-        if not self.has_metering:
-            return None
-        data = await self.client.request(f"circuit/getEnergyMeterValue?id={self.dsid}")
-        return data.get("meterValue")
+                    self.sensors[identifier] = DigitalstromMeterSensorChannel(
+                        self, identifier
+                    )

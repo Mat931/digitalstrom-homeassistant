@@ -198,7 +198,7 @@ class DigitalstromBinarySensor(BinarySensorEntity, DigitalstromEntity):
                 self._attr_entity_registry_enabled_default = False
 
     async def async_added_to_hass(self) -> None:
-        self.update_callback(self.channel.last_state)
+        self.update_callback(self.channel.last_value)
         self.async_on_remove(
             self.channel.register_update_callback(self.update_callback)
         )

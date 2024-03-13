@@ -31,12 +31,12 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .api.channel import DigitalstromSensorChannel
-from .api.circuit import DigitalstromCircuit
+from .api.channel import DigitalstromMeterSensorChannel, DigitalstromSensorChannel
 from .const import CONF_DSUID, DOMAIN
 from .entity import DigitalstromEntity
 
 _LOGGER = logging.getLogger(__name__)
+
 
 SENSORS_MAP: dict[int, SensorEntityDescription] = {
     -1: SensorEntityDescription(
@@ -295,9 +295,8 @@ async def async_setup_entry(
 
     circuit_sensors = []
     for circuit in apartment.circuits.values():
-        if circuit.has_metering:
-            circuit_sensors.append(DigitalstromCircuitSensor(circuit, "power"))
-            circuit_sensors.append(DigitalstromCircuitSensor(circuit, "energy"))
+        for sensor in circuit.sensors.values():
+            circuit_sensors.append(DigitalstromMeterSensor(sensor))
     async_add_entities(circuit_sensors)
     _LOGGER.debug("Adding %i circuit sensors", len(circuit_sensors))
 
@@ -329,7 +328,7 @@ class DigitalstromSensor(SensorEntity, DigitalstromEntity):
         self._attr_state_class = self.entity_description.state_class
 
     async def async_added_to_hass(self) -> None:
-        self.update_callback(self.channel.last_state)
+        self.update_callback(self.channel.last_value)
         self.async_on_remove(
             self.channel.register_update_callback(self.update_callback)
         )
@@ -353,28 +352,28 @@ class DigitalstromSensor(SensorEntity, DigitalstromEntity):
         return self._state
 
 
-class DigitalstromCircuitSensor(SensorEntity):
-    def __init__(self, circuit: DigitalstromCircuit, identifier: str):
-        self.circuit = circuit
-        self._attr_unique_id: str = f"{self.circuit.dsuid}_{identifier}"
+class DigitalstromMeterSensor(SensorEntity):
+    def __init__(self, sensor_channel: DigitalstromMeterSensorChannel):
+        self.channel = sensor_channel
+        self.circuit = sensor_channel.device
+        self._attr_unique_id: str = f"{self.circuit.dsuid}_{self.channel.index}"
         self.entity_id = f"{DOMAIN}.{self._attr_unique_id}"
         self._attr_should_poll = True
         self._has_state = False
         self._attributes: dict[str, Any] = {}
         self._state: int | None = None
         self.valid = False
-        self.entity_id = f"{DOMAIN}.{self.circuit.dsuid}_{identifier}"
+        self.entity_id = f"{DOMAIN}.{self.circuit.dsuid}_{self.channel.index}"
         self._state = None
-        self.identifier = identifier
         self._attr_has_entity_name = True
 
-        if identifier == "power":
+        if self.channel.index == "power":
             self._attr_name = "Power"
             self._attr_native_unit_of_measurement = UnitOfPower.WATT
             self._attr_device_class = SensorDeviceClass.POWER
             self._attr_state_class = SensorStateClass.MEASUREMENT
             self._attr_suggested_display_precision = 0
-        elif identifier == "energy":
+        elif self.channel.index == "energy":
             self._attr_name = "Energy"
             self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
             self._attr_device_class = SensorDeviceClass.ENERGY
@@ -395,7 +394,7 @@ class DigitalstromCircuitSensor(SensorEntity):
 
     @property
     def available(self) -> bool:
-        return self.circuit.available  # TODO: refresh
+        return self.circuit.available
 
     @property
     def native_value(self) -> str:
@@ -403,7 +402,7 @@ class DigitalstromCircuitSensor(SensorEntity):
         return self._state
 
     async def async_update(self, **kwargs) -> None:
-        if self.identifier == "power":
-            self._state = await self.circuit.get_power()
-        elif self.identifier == "energy":
-            self._state = await self.circuit.get_energy() / 3600000
+        if self.channel.index == "energy":
+            self._state = await self.channel.get_value() / 3600000
+        else:
+            self._state = await self.channel.get_value()
