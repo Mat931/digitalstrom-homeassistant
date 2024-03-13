@@ -16,6 +16,7 @@ from .entity import DigitalstromEntity
 
 _LOGGER = logging.getLogger(__name__)
 
+PARALLEL_UPDATES = 1
 
 APARTMENT_SCENES: dict[int, str] = {
     64: "Auto Standby",
