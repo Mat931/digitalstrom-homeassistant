@@ -3,6 +3,8 @@ This integration allows you to connect your digitalSTROM server (dSS) to Home As
 
 [🇩🇪 Deutsche Übersetzung](https://github.com/Mat931/digitalstrom-homeassistant/blob/main/README_de.md)
 
+[Join the discord server](https://discord.gg/uTDweuNnHq)
+
 ## Installation using HACS
 1. Download and install [HACS](https://hacs.xyz/).
 2. Click this MY button to add `digitalstrom-homeassistant` as a custom repository:
