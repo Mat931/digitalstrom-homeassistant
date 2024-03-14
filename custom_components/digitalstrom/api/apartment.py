@@ -2,6 +2,27 @@ import logging
 
 from .client import DigitalstromClient
 
+APARTMENT_SCENES: list = [
+    ("Auto Standby", 64, None, None, None),
+    ("Standby", 67, None, None, None),
+    ("Deep Off", 68, None, None, None),
+    ("Zone Active", 75, None, None, None),
+    ("Sleeping", 69, 70, "hibernation", "sleeping"),
+    ("Absent", 72, 71, "presence", "absent"),
+    ("Door Bell", 73, None, None, None),
+    ("Burglary", 93, None, None, None),
+    ("Panic", 65, None, "panic", "active"),
+    ("Fire", 76, None, "fire", "active"),
+    ("Alarm 1", 74, None, "alarm", "active"),
+    ("Alarm 2", 83, None, "alarm2", "active"),
+    ("Alarm 3", 84, None, "alarm3", "active"),
+    ("Alarm 4", 85, None, "alarm4", "active"),
+    ("Wind", 86, 87, "wind", "active"),
+    ("Rain", 88, 89, "rain", "active"),
+    ("Hail", 90, 91, "hail", "active"),
+    ("Pollution", 92, None, None, None),
+]
+
 
 class DigitalstromApartment:
     def __init__(self, client: DigitalstromClient, system_dsuid: str):
@@ -10,8 +31,18 @@ class DigitalstromApartment:
         self.devices = {}
         self.circuits = {}
         self.zones = {}
+        self.scenes = []
         self.logger = logging.getLogger("digitalstrom_api")
         client.register_event_callback(self.event_callback)
+        from .scene import DigitalstromApartmentScene
+
+        for scene in APARTMENT_SCENES:
+            scene_name, call_number, undo_number, state_name, on_state = scene
+            self.scenes.append(
+                DigitalstromApartmentScene(
+                    self, scene_name, call_number, undo_number, state_name, on_state
+                )
+            )
 
     async def call_scene(self, scene: int):
         await self.client.request(f"apartment/callScene?sceneNumber={scene}")

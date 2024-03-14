@@ -9,40 +9,14 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .api.apartment import DigitalstromApartment
 from .api.channel import DigitalstromOutputChannel
+from .api.scene import DigitalstromApartmentScene
 from .const import CONF_DSUID, DOMAIN
 from .entity import DigitalstromEntity
 
 _LOGGER = logging.getLogger(__name__)
 
 PARALLEL_UPDATES = 1
-
-APARTMENT_SCENES: dict[int, str] = {
-    64: "Auto Standby",
-    65: "Panic",
-    67: "Standby",
-    68: "Deep Off",
-    69: "Sleeping",
-    70: "Wakeup",
-    71: "Present",
-    72: "Absent",
-    73: "Door Bell",
-    74: "Alarm 1",
-    75: "Zone Active",
-    76: "Fire",
-    83: "Alarm 2",
-    84: "Alarm 3",
-    85: "Alarm 4",
-    86: "Wind",
-    87: "No Wind",
-    88: "Rain",
-    89: "No Rain",
-    90: "Hail",
-    91: "No Hail",
-    92: "Pollution",
-    93: "Burglary",
-}
 
 
 async def async_setup_entry(
@@ -63,10 +37,8 @@ async def async_setup_entry(
     async_add_entities(switches)
 
     apartment_scenes = []
-    for scene_id, scene_name in APARTMENT_SCENES.items():
-        apartment_scenes.append(
-            DigitalstromApartmentScene(apartment, scene_id, scene_name)
-        )
+    for apartment_scene in apartment.scenes:
+        apartment_scenes.append(DigitalstromApartmentSceneSwitch(apartment_scene))
     _LOGGER.debug("Adding %i apartment scenes", len(apartment_scenes))
     async_add_entities(apartment_scenes)
 
@@ -103,31 +75,38 @@ class DigitalstromSwitch(SwitchEntity, DigitalstromEntity):
         self.last_power_state = await self.device.get_power_state()
 
 
-class DigitalstromApartmentScene(SwitchEntity):
-    def __init__(
-        self, apartment: DigitalstromApartment, scene_id: int, scene_name: str
-    ):
-        self.scene_id = scene_id
-        self.scene_name = scene_name
-        self.apartment = apartment
-        self.client = self.apartment.client
-        self.entity_id = f"{DOMAIN}.{self.apartment.dsuid}_{self.scene_id}"
-        self._attr_name = self.scene_name
-        self._attr_should_poll = False
-        self._attr_unique_id: str = f"{self.apartment.dsuid}_scene{self.scene_id}"
+class DigitalstromApartmentSceneSwitch(SwitchEntity):
+    def __init__(self, apartment_scene: DigitalstromApartmentScene):
+        self.scene = apartment_scene
+        self.entity_id = (
+            f"{DOMAIN}.{self.scene.apartment.dsuid}_{self.scene.call_number}"
+        )
+        self._attr_name = self.scene.name
+        self._attr_should_poll = True
+        self._attr_unique_id: str = (
+            f"{self.scene.apartment.dsuid}_scene{self.scene.call_number}"
+        )
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return true if the switch is on."""
+        return self.scene.last_value
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
-        self.apartment.call_scene(self.scene_id)
+        await self.scene.call()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
-        self.apartment.undo_scene(self.scene_id)
+        await self.scene.undo()
+
+    async def async_update(self, **kwargs: Any) -> None:
+        await self.scene.get_value()
 
     @property
     def device_info(self) -> dict:
         return DeviceInfo(
-            identifiers={(DOMAIN, self.apartment.dsuid)},
+            identifiers={(DOMAIN, self.scene.apartment.dsuid)},
             name="Apartment",
             manufacturer="digitalSTROM",
         )
