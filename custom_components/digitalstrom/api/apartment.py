@@ -110,6 +110,7 @@ class DigitalstromApartment:
                         zone = DigitalstromZone(self.client, self, zone_id)
                         self.zones[zone_id] = zone
                     self.zones[zone_id].load_from_dict(z)
+                    await zone.get_scenes()
         return self.zones
 
     async def event_callback(self, data: dict) -> None:

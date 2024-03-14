@@ -1,4 +1,5 @@
 from .apartment import DigitalstromApartment
+from .zone import DigitalstromZone
 
 
 class DigitalstromScene:
@@ -52,3 +53,23 @@ class DigitalstromApartmentScene(DigitalstromScene):
         except ServerError:
             self.last_value = None
         return self.last_value
+
+
+class DigitalstromZoneScene(DigitalstromScene):
+    def __init__(
+        self,
+        zone: DigitalstromZone,
+        number: int,
+        group: int,
+        name: str = None,
+    ):
+        self.zone = zone
+        self.name = name
+        self.number = number
+        self.group = group
+
+    async def call(self) -> None:
+        await self.zone.call_scene(self.number, self.group)
+
+    async def undo(self) -> None:
+        await self.zone.undo_scene(self.number, self.group)
