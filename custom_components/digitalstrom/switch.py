@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -10,7 +8,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .api.channel import DigitalstromOutputChannel
-from .api.scene import DigitalstromApartmentScene, DigitalstromZoneScene
+from .api.scene import DigitalstromApartmentScene
 from .const import CONF_DSUID, DOMAIN
 from .entity import DigitalstromEntity
 
@@ -41,13 +39,6 @@ async def async_setup_entry(
         apartment_scenes.append(DigitalstromApartmentSceneSwitch(apartment_scene))
     _LOGGER.debug("Adding %i apartment scenes", len(apartment_scenes))
     async_add_entities(apartment_scenes)
-
-    zone_scenes = []
-    for zone in apartment.zones.values():
-        for zone_scene in zone.scenes.values():
-            zone_scenes.append(DigitalstromZoneSceneSwitch(zone_scene))
-    _LOGGER.debug("Adding %i zone scenes", len(zone_scenes))
-    async_add_entities(zone_scenes)
 
 
 class DigitalstromSwitch(SwitchEntity, DigitalstromEntity):
@@ -117,42 +108,4 @@ class DigitalstromApartmentSceneSwitch(SwitchEntity):
             name="Apartment",
             model="Apartment",
             manufacturer="digitalSTROM",
-        )
-
-
-class DigitalstromZoneSceneSwitch(SwitchEntity):
-    def __init__(self, zone_scene: DigitalstromZoneScene):
-        self.scene = zone_scene
-        self.entity_id = f"{DOMAIN}.{self.scene.zone.apartment.dsuid}_zone{self.scene.zone.zone_id}_group{self.scene.group}_scene{self.scene.number}"
-        if self.scene.name is not None:
-            self._attr_name = self.scene.name
-        else:
-            self._attr_name = (
-                f"Unnamed scene (group {self.scene.group} scene {self.scene.number})"
-            )
-            self._attr_entity_registry_enabled_default = False
-        self._attr_should_poll = False
-        self._attr_unique_id: str = f"{self.scene.zone.apartment.dsuid}_zone{self.scene.zone.zone_id}_group{self.scene.group}_scene{self.scene.number}"
-
-    async def async_turn_on(self, **kwargs: Any) -> None:
-        """Turn the entity on."""
-        await self.scene.call()
-
-    async def async_turn_off(self, **kwargs: Any) -> None:
-        """Turn the entity off."""
-        await self.scene.undo()
-
-    @property
-    def device_info(self) -> dict:
-        return DeviceInfo(
-            identifiers={
-                (
-                    DOMAIN,
-                    f"{self.scene.zone.apartment.dsuid}_zone{self.scene.zone.zone_id}",
-                )
-            },
-            name=self.scene.zone.name,
-            model="Zone",
-            manufacturer="digitalSTROM",
-            suggested_area=self.scene.zone.name,
         )

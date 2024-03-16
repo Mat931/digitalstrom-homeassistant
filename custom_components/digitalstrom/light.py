@@ -84,7 +84,6 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
         self.client = self.device.client
         self.dimmable = self.device.output_dimmable
         self._attr_should_poll = True
-        self.last_value = None
         self.entity_id = f"{DOMAIN}.{self.device.dsuid}_{brightness_channel.index}"
         self._attr_name = self.device.name
 
@@ -139,18 +138,18 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
         await self.brightness_channel.set_value(0)
 
     async def async_update(self, **kwargs: Any) -> None:
-        self.last_value = await self.brightness_channel.get_value()
+        await self.brightness_channel.get_value()
 
     @property
     def is_on(self) -> bool:
         """Return true if the light is on."""
-        if self.last_value is None:
+        if self.brightness_channel.last_value is None:
             return None
-        return self.last_value > 0
+        return self.brightness_channel.last_value > 0
 
     @property
     def brightness(self) -> int:
         """Return the brightness of a device."""
-        if self.last_value is None:
+        if self.brightness_channel.last_value is None:
             return None
-        return self.last_value * 2.55
+        return self.brightness_channel.last_value * 2.55

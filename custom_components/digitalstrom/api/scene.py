@@ -1,4 +1,5 @@
 from .apartment import DigitalstromApartment
+from .exceptions import ServerError
 from .zone import DigitalstromZone
 
 
