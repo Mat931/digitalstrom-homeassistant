@@ -111,7 +111,17 @@ class DigitalstromApartment:
                         self.zones[zone_id] = zone
                     self.zones[zone_id].load_from_dict(z)
                     await zone.get_scenes()
+        await self.get_zone_climate_data()
         return self.zones
+
+    async def get_zone_climate_data(self) -> None:
+        data = await self.client.request("apartment/getTemperatureControlStatus")
+        if zones := data.get("zones"):
+            for z in zones:
+                if "id" in z:
+                    zone_id = int(z["id"])
+                    if zone_id in self.zones.keys():
+                        self.zones[zone_id].load_climate_data_from_dict(z)
 
     async def event_callback(self, data: dict) -> None:
         if name := data.get("name"):

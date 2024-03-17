@@ -12,6 +12,12 @@ class DigitalstromZone:
         self.name = ""
         self.group_ids = []
         self.scenes = {}
+        self.climate_control_mode = None
+        self.climate_control_state = None
+        self.climate_operation_mode = None
+        self.current_temperature = None
+        self.target_temperature = None
+        self.control_value = None
 
     async def call_scene(self, scene: int, group_id: int = None) -> None:
         if group_id is not None:
@@ -33,6 +39,15 @@ class DigitalstromZone:
                 f"zone/undoScene?id={self.zone_id}&sceneNumber={scene}"
             )
 
+    async def set_target_temperature(
+        self, target_temperature: float, operation_mode: int = None
+    ) -> None:
+        if operation_mode is None:
+            operation_mode = self.climate_operation_mode
+        await self.client.request(
+            f'zone/setTemperatureControlConfig2?id={self.zone_id}&targetTemperatures={{"{operation_mode}": {target_temperature}}}'
+        )
+
     def load_from_dict(self, data: dict) -> None:
         if "zoneID" in data:
             zone_id = int(data["zoneID"])
@@ -41,6 +56,25 @@ class DigitalstromZone:
                     self.name = name
                 if (group_ids := data.get("groups")) and (len(group_ids) > 0):
                     self.group_ids = group_ids
+
+    def load_climate_data_from_dict(self, data: dict) -> None:
+        if "id" in data:
+            zone_id = int(data["id"])
+            if zone_id == self.zone_id:
+                if (control_mode := data.get("ControlMode", None)) is not None:
+                    self.climate_control_mode = int(control_mode)
+                if (control_state := data.get("ControlState", None)) is not None:
+                    self.climate_control_state = int(control_state)
+                if (operation_mode := data.get("OperationMode", None)) is not None:
+                    self.climate_operation_mode = int(operation_mode)
+                if (
+                    current_temperature := data.get("TemperatureValue", None)
+                ) is not None:
+                    self.current_temperature = float(current_temperature)
+                if (target_temperature := data.get("NominalValue", None)) is not None:
+                    self.target_temperature = float(target_temperature)
+                if (control_value := data.get("ControlValue", None)) is not None:
+                    self.control_value = float(control_value)
 
     async def get_scenes(self) -> None:
         from .scene import DigitalstromZoneScene
