@@ -92,11 +92,11 @@ class DigitalstromApartmentSceneSwitch(SwitchEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
-        await self.scene.call()
+        await self.scene.call(self.scene.call_number == 90)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
-        await self.scene.undo()
+        await self.scene.undo(self.scene.call_number == 90)
 
     async def async_update(self, **kwargs: Any) -> None:
         await self.scene.get_value()

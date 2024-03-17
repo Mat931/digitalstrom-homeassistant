@@ -44,13 +44,15 @@ class DigitalstromApartment:
                 )
             )
 
-    async def call_scene(self, scene: int):
-        await self.client.request(f"apartment/callScene?sceneNumber={scene}")
+    async def call_scene(self, scene: int, force: bool = False) -> None:
+        force_str = "&force=true" if force else ""
+        await self.client.request(f"apartment/callScene?sceneNumber={scene}{force_str}")
 
-    async def undo_scene(self, scene: int):
-        await self.client.request(f"apartment/undoScene?sceneNumber={scene}")
+    async def undo_scene(self, scene: int, force: bool = False) -> None:
+        force_str = "&force=true" if force else ""
+        await self.client.request(f"apartment/undoScene?sceneNumber={scene}{force_str}")
 
-    def find_split_devices(self):
+    def find_split_devices(self) -> None:
         devices = sorted(self.devices.values(), key=lambda x: int(x.dsuid, 16))
         for prev, curr in zip(devices, devices[1:]):
             if (

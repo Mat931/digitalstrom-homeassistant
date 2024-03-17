@@ -19,25 +19,23 @@ class DigitalstromZone:
         self.target_temperature = None
         self.control_value = None
 
-    async def call_scene(self, scene: int, group_id: int = None) -> None:
-        if group_id is not None:
-            await self.client.request(
-                f"zone/callScene?id={self.zone_id}&sceneNumber={scene}&groupID={group_id}"
-            )
-        else:
-            await self.client.request(
-                f"zone/callScene?id={self.zone_id}&sceneNumber={scene}"
-            )
+    async def call_scene(
+        self, scene: int, group_id: int = None, force: bool = False
+    ) -> None:
+        group_str = "" if group_id is None else f"&groupID={group_id}"
+        force_str = "&force=true" if force else ""
+        await self.client.request(
+            f"zone/callScene?id={self.zone_id}&sceneNumber={scene}{group_str}{force_str}"
+        )
 
-    async def undo_scene(self, scene: int, group_id: int = None) -> None:
-        if group_id is not None:
-            await self.client.request(
-                f"zone/undoScene?id={self.zone_id}&sceneNumber={scene}&groupID={group_id}"
-            )
-        else:
-            await self.client.request(
-                f"zone/undoScene?id={self.zone_id}&sceneNumber={scene}"
-            )
+    async def undo_scene(
+        self, scene: int, group_id: int = None, force: bool = False
+    ) -> None:
+        group_str = "" if group_id is None else f"&groupID={group_id}"
+        force_str = "&force=true" if force else ""
+        await self.client.request(
+            f"zone/undoScene?id={self.zone_id}&sceneNumber={scene}{group_str}{force_str}"
+        )
 
     async def set_target_temperature(
         self, target_temperature: float, operation_mode: int = None

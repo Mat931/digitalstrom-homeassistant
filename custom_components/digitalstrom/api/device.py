@@ -78,14 +78,16 @@ class DigitalstromDevice:
             self.reading_power_state_unsupported = True
         return None
 
-    async def call_scene(self, scene: int) -> None:
+    async def call_scene(self, scene: int, force: bool = False) -> None:
+        force_str = "&force=true" if force else ""
         await self.client.request(
-            f"device/callScene?dsuid={self.dsuid}&sceneNumber={scene}"
+            f"device/callScene?dsuid={self.dsuid}&sceneNumber={scene}{force_str}"
         )
 
-    async def undo_scene(self, scene: int) -> None:
+    async def undo_scene(self, scene: int, force: bool = False) -> None:
+        force_str = "&force=true" if force else ""
         await self.client.request(
-            f"device/undoScene?dsuid={self.dsuid}&sceneNumber={scene}"
+            f"device/undoScene?dsuid={self.dsuid}&sceneNumber={scene}{force_str}"
         )
 
     def _load_general(self, data: dict) -> None:
