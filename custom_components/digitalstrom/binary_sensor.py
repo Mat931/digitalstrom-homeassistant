@@ -180,22 +180,20 @@ class DigitalstromBinarySensor(BinarySensorEntity, DigitalstromEntity):
         self.entity_description = BINARY_SENSORS_MAP.get(
             sensor_type, BINARY_SENSORS_MAP[-1]
         )
-        self._attr_name = self.entity_description.name
+        self._attr_name = f"{self.device.name} {self.entity_description.name}"
         self._attr_device_class = self.entity_description.device_class
         self._attr_entity_category = self.entity_description.entity_category
-        self._attr_has_entity_name = True
+        self._attr_has_entity_name = False
         if self.entity_description.key == "unknown":
             self._attr_name += f" (type {sensor_type})"
             self._attr_entity_registry_enabled_default = True
-        if self.entity_description.key == "0":
-            self._attr_name = self.device.name
-            self._attr_has_entity_name = False
-            if (
-                (self.index == 0)
-                and (self.device.button is not None)
-                and (not self.device.button_used)
-            ):
-                self._attr_entity_registry_enabled_default = False
+        if (
+            (self.entity_description.key == "0")
+            and (self.index == 0)
+            and (self.device.button is not None)
+            and (not self.device.button_used)
+        ):
+            self._attr_entity_registry_enabled_default = False
 
     async def async_added_to_hass(self) -> None:
         self.update_callback(self.channel.last_value)
