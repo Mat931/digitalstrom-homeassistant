@@ -87,7 +87,7 @@ class DigitalstromConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._ssl: str | bool | None = None
         self._dsuid: str | None = None
         self._name = "digitalSTROM"
-        self._reauth_entry: ConfigEntry | None = None
+        self._existing_entry: ConfigEntry | None = None
         super().__init__(*args, **kwargs)
 
     async def async_step_user(
@@ -118,18 +118,21 @@ class DigitalstromConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     pass
 
             await self.async_set_unique_id(self._dsuid)
-            if not self._reauth_entry:
+            if self._existing_entry is None:
                 self._abort_if_unique_id_configured()
 
             try:
                 info = await validate_input(self.hass, user_input)
                 user_input.update(info)
-                if self._reauth_entry:
-                    entry = self._reauth_entry
-                    self.hass.config_entries.async_update_entry(entry, data=user_input)
+                if self._existing_entry is not None:
+                    self.hass.config_entries.async_update_entry(
+                        self._existing_entry, data=user_input
+                    )
                     # Reload the config entry to notify of updated config
                     self.hass.async_create_task(
-                        self.hass.config_entries.async_reload(entry.entry_id)
+                        self.hass.config_entries.async_reload(
+                            self._existing_entry.entry_id
+                        )
                     )
 
                     return self.async_abort(reason="reauth_successful")
@@ -194,8 +197,10 @@ class DigitalstromConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> FlowResult:
         """Handle a flow initialized by a reauth event."""
-        entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
-        assert entry is not None
+        self._existing_entry = self.hass.config_entries.async_get_entry(
+            self.context["entry_id"]
+        )
+        assert self._existing_entry is not None
         self._host = entry_data.get(CONF_HOST, self._host)
         self._port = entry_data.get(CONF_PORT, self._port)
         self._user = entry_data.get(CONF_USERNAME, self._user)
@@ -204,6 +209,23 @@ class DigitalstromConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if type(self._ssl) is bool and not self._ssl:
             self._ssl = IGNORE_SSL_VERIFICATION
         self._dsuid = entry_data.get(CONF_DSUID, self._dsuid)
-        self._reauth_entry = entry
-
         return await self.async_step_user()
+
+    async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None):
+        """Add reconfigure step to allow to reconfigure a config entry."""
+        self._existing_entry = self.hass.config_entries.async_get_entry(
+            self.context["entry_id"]
+        )
+        assert self._existing_entry is not None
+        if user_input is None:
+            self._host = self._existing_entry.data.get(CONF_HOST, self._host)
+            self._port = self._existing_entry.data.get(CONF_PORT, self._port)
+            self._user = self._existing_entry.data.get(CONF_USERNAME, self._user)
+            self._password = self._existing_entry.data.get(
+                CONF_PASSWORD, self._password
+            )
+            self._ssl = self._existing_entry.data.get(CONF_SSL, self._ssl)
+            if type(self._ssl) is bool and not self._ssl:
+                self._ssl = IGNORE_SSL_VERIFICATION
+            self._dsuid = self._existing_entry.data.get(CONF_DSUID, self._dsuid)
+        return await self.async_step_user(user_input)
