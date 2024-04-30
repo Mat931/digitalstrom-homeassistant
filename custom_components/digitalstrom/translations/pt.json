@@ -5,7 +5,7 @@
         },
         "error": {
             "cannot_connect": "Falha na ligação",
-            "invalid_auth": "Password ou senha errada",
+            "invalid_auth": "Utilizador ou senha errada",
             "invalid_certificate": "Falha na validação do certificado",
             "invalid_fingerprint": "Comprimento de impressão digital incorrecta",
             "unknown": "Unexpected error"
