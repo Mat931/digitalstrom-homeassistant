@@ -1,0 +1,25 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Equipamento já configurado"
+        },
+        "error": {
+            "cannot_connect": "Falha na ligação",
+            "invalid_auth": "Utilizador ou senha errada",
+            "invalid_certificate": "Falha na validação do certificado",
+            "invalid_fingerprint": "Comprimento de impressão digital incorrecta",
+            "unknown": "Unexpected error"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "host": "Endereço",
+                    "password": "Senha",
+                    "port": "Porta",
+                    "ssl": "SHA-256 impressão digital do certificado",
+                    "username": "utilizador"
+                }
+            }
+        }
+    }
+}
