@@ -131,9 +131,9 @@ class DigitalstromApartment:
             if name == "deviceSensorValue":
                 dsuid = data["source"]["dsid"]
                 index = int(data["properties"]["sensorIndex"])
-                sensor_type = int(data["properties"]["sensorType"])
+                # sensor_type = int(data["properties"]["sensorType"])
+                # raw_value = int(data["properties"]["sensorValue"])  # "sensorValue" is not always present
                 value = float(data["properties"]["sensorValueFloat"])
-                raw_value = int(data["properties"]["sensorValue"])
                 if sensor := self.devices.get(dsuid).sensors.get(index):
                     sensor.update(value)
             elif name == "deviceBinaryInputEvent":
@@ -141,7 +141,7 @@ class DigitalstromApartment:
                 index = int(data["properties"]["inputIndex"])
                 raw_state = int(data["properties"]["inputState"])
                 state = raw_state > 0
-                input_type = int(data["properties"]["inputType"])
+                # input_type = int(data["properties"]["inputType"])
                 # print(f"Binary input event: {dsuid}.{index} {state}, Raw: {raw_state}")
                 if binary_sensor := self.devices.get(dsuid).binary_inputs.get(index):
                     binary_sensor.update(state, raw_state)
@@ -154,8 +154,8 @@ class DigitalstromApartment:
                         device.availability_callback(False, call_parent=True)
                     else:
                         device.availability_callback(True)
-                raw_value = data["properties"]["value"]
-                statename = data["properties"]["statename"]
+                # raw_value = data["properties"]["value"]
+                # statename = data["properties"]["statename"]
 
                 # if binary_input := self.devices.get(dsuid).binary_inputs.get(index):
                 #    value = int(raw_value) == 1
