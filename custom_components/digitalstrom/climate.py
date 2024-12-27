@@ -163,9 +163,7 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
     @property
     def preset_mode(self) -> str | None:
         """Return current preset mode."""
-        if self.zone.climate_operation_mode not in ID_TO_PRESET.keys():
-            return None
-        return ID_TO_PRESET[self.zone.climate_operation_mode]
+        return ID_TO_PRESET.get(self.zone.climate_operation_mode, None)
 
     @property
     def current_temperature(self) -> float | None:
@@ -179,16 +177,28 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature (and operation mode if set)."""
+        _LOGGER.debug(
+            f"async_set_temperature {kwargs} ({self.zone.climate_operation_mode})"
+        )
         if ATTR_HVAC_MODE in kwargs:
             await self.async_set_hvac_mode(kwargs[ATTR_HVAC_MODE])
             if self.hvac_mode() != kwargs[ATTR_HVAC_MODE]:
+                _LOGGER.debug(
+                    f"failed to change hvac mode {self.hvac_mode()} -> {kwargs[ATTR_HVAC_MODE]}"
+                )
                 return
         if ATTR_TEMPERATURE in kwargs:
             await self.zone.set_target_temperature(kwargs[ATTR_TEMPERATURE])
+            _LOGGER.debug(
+                f"set target temperature done ({self.zone.climate_operation_mode})"
+            )
             await self.coordinator.async_request_refresh()
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new operation mode."""
+        _LOGGER.debug(
+            f"async_set_hvac_mode {hvac_mode} ({self.zone.climate_operation_mode})"
+        )
         if hvac_mode == HVACMode.OFF:
             await self.async_turn_off()
             return
@@ -211,6 +221,9 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set preset mode."""
+        _LOGGER.debug(
+            f"async_set_preset_mode {preset_mode} ({self.zone.climate_operation_mode})"
+        )
         if preset_mode not in PRESET_TO_SCENE:
             return
         scene_id = PRESET_TO_SCENE[preset_mode]
@@ -221,6 +234,7 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
 
     async def async_turn_on(self) -> None:
         """Turn the entity on."""
+        _LOGGER.debug(f"async_turn_on ({self.zone.climate_operation_mode})")
         if self.zone.climate_operation_mode == 7:
             await self.async_set_preset_mode(PRESET_PASSIVE_COOLING)
         elif self.zone.climate_operation_mode in [0, 9]:
@@ -228,6 +242,7 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
 
     async def async_turn_off(self) -> None:
         """Turn the entity off."""
+        _LOGGER.debug(f"async_turn_off ({self.zone.climate_operation_mode})")
         if self.zone.climate_operation_mode in [6, 7]:
             await self.async_set_preset_mode(PRESET_PASSIVE_COOLING_OFF)
         else:
@@ -236,6 +251,9 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
+        _LOGGER.debug(
+            f"_handle_coordinator_update ({self.zone.climate_operation_mode})"
+        )
         self.async_write_ha_state()
 
     @property

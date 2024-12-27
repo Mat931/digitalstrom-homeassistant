@@ -119,6 +119,7 @@ class DigitalstromApartment:
     async def get_zone_climate_data(self) -> None:
         data = await self.client.request("apartment/getTemperatureControlStatus")
         if zones := data.get("zones"):
+            self.logger.debug(f"getTemperatureControlStatus {data}")
             for z in zones:
                 if "id" in z:
                     zone_id = int(z["id"])

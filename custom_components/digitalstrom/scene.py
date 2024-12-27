@@ -45,7 +45,9 @@ class DigitalstromZoneSceneEntity(SceneEntity):
             )
             self._attr_entity_registry_enabled_default = False
         self._attr_should_poll = False
-        self._attr_unique_id: str = f"{self.scene.zone.apartment.dsuid}_zone{self.scene.zone.zone_id}_group{self.scene.group}_scene{self.scene.number}"
+        self._attr_unique_id: str = (
+            f"{self.scene.zone.apartment.dsuid}_zone{self.scene.zone.zone_id}_group{self.scene.group}_scene{self.scene.number}"
+        )
 
     async def async_activate(self, **kwargs: Any) -> None:
         """Turn the entity on."""

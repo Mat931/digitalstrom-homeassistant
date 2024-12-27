@@ -1,4 +1,5 @@
 """The digitalSTROM integration."""
+
 from __future__ import annotations
 
 import logging
@@ -83,13 +84,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def start_watchdog(event=None):
         """Start websocket watchdog."""
         if "watchdog" not in hass.data[DOMAIN][entry.data[CONF_DSUID]]:
-            hass.data[DOMAIN][entry.data[CONF_DSUID]][
-                "watchdog"
-            ] = async_track_time_interval(
-                hass,
-                client.event_listener_watchdog,
-                WEBSOCKET_WATCHDOG_INTERVAL,
-                cancel_on_shutdown=True,
+            hass.data[DOMAIN][entry.data[CONF_DSUID]]["watchdog"] = (
+                async_track_time_interval(
+                    hass,
+                    client.event_listener_watchdog,
+                    WEBSOCKET_WATCHDOG_INTERVAL,
+                    cancel_on_shutdown=True,
+                )
             )
 
     async def stop_watchdog(event=None):

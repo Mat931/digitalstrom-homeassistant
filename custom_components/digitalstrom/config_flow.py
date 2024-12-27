@@ -1,4 +1,5 @@
 """Config flow for digitalSTROM integration."""
+
 from __future__ import annotations
 
 import logging
@@ -154,9 +155,9 @@ class DigitalstromConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         fields[vol.Required(CONF_HOST, default=self._host or vol.UNDEFINED)] = str
         fields[vol.Required(CONF_PORT, default=self._port or vol.UNDEFINED)] = int
         fields[vol.Required(CONF_USERNAME, default=self._user or vol.UNDEFINED)] = str
-        fields[
-            vol.Required(CONF_PASSWORD, default=self._password or vol.UNDEFINED)
-        ] = str
+        fields[vol.Required(CONF_PASSWORD, default=self._password or vol.UNDEFINED)] = (
+            str
+        )
         fields[vol.Optional(CONF_SSL, default=self._ssl or vol.UNDEFINED)] = str
 
         return self.async_show_form(
