@@ -139,6 +139,7 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
             PRESET_PASSIVE_COOLING,
         ]
         self._enable_turn_on_off_backwards_compatibility = False
+        self._target_climate_operation_mode = None
 
     @property
     def hvac_mode(self) -> HVACMode | None:
@@ -175,49 +176,65 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
         """Return the temperature we try to reach."""
         return self.zone.target_temperature
 
+    def _get_new_climate_operation_mode(
+        self, old_climate_operation_mode: int, hvac_mode: HVACMode
+    ) -> int:
+        """Calculate new climate operation mode using hvac_mode."""
+        if hvac_mode == HVACMode.OFF:
+            if old_climate_operation_mode in [6, 7]:
+                return 7
+            else:
+                return 0
+        elif hvac_mode == HVACMode.HEAT:
+            if old_climate_operation_mode in [10, 11, 12, 13, 14]:
+                return old_climate_operation_mode - 9
+            elif old_climate_operation_mode not in [1, 2, 3, 4, 5]:
+                return 2
+        elif hvac_mode == HVACMode.COOL:
+            if old_climate_operation_mode in [1, 2, 3, 4, 5]:
+                return old_climate_operation_mode + 9
+            elif old_climate_operation_mode not in [6, 10, 11, 12, 13, 14]:
+                return 6 if old_climate_operation_mode == 7 else 11
+        return old_climate_operation_mode
+
+    async def _async_set_climate_operation_mode(
+        self, climate_operation_mode: int
+    ) -> None:
+        """Set climate operation mode."""
+        self._target_climate_operation_mode = climate_operation_mode
+        await self.zone.call_scene(climate_operation_mode, 48)
+        await self.coordinator.async_request_refresh()
+
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature (and operation mode if set)."""
         _LOGGER.debug(
             f"async_set_temperature {kwargs} ({self.zone.climate_operation_mode})"
         )
+        if self._target_climate_operation_mode is None:
+            self._target_climate_operation_mode = self.zone.climate_operation_mode
+        new_climate_operation_mode = self._target_climate_operation_mode
         if ATTR_HVAC_MODE in kwargs:
-            await self.async_set_hvac_mode(kwargs[ATTR_HVAC_MODE])
-            if self.hvac_mode() != kwargs[ATTR_HVAC_MODE]:
-                _LOGGER.debug(
-                    f"failed to change hvac mode {self.hvac_mode()} -> {kwargs[ATTR_HVAC_MODE]}"
-                )
-                return
+            new_climate_operation_mode = self._get_new_climate_operation_mode(
+                self._target_climate_operation_mode, kwargs[ATTR_HVAC_MODE]
+            )
         if ATTR_TEMPERATURE in kwargs:
-            await self.zone.set_target_temperature(kwargs[ATTR_TEMPERATURE])
+            await self.zone.set_target_temperature(
+                kwargs[ATTR_TEMPERATURE], new_climate_operation_mode
+            )
             _LOGGER.debug(
                 f"set target temperature done ({self.zone.climate_operation_mode})"
             )
-            await self.coordinator.async_request_refresh()
+        await self._async_set_climate_operation_mode(new_climate_operation_mode)
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new operation mode."""
         _LOGGER.debug(
             f"async_set_hvac_mode {hvac_mode} ({self.zone.climate_operation_mode})"
         )
-        if hvac_mode == HVACMode.OFF:
-            await self.async_turn_off()
-            return
-        elif hvac_mode == HVACMode.HEAT:
-            if self.zone.climate_operation_mode in [10, 11, 12, 13, 14]:
-                await self.zone.call_scene(self.zone.climate_operation_mode - 9, 48)
-                await self.coordinator.async_request_refresh()
-            elif self.zone.climate_operation_mode not in [1, 2, 3, 4, 5]:
-                await self.zone.call_scene(2, 48)
-                await self.coordinator.async_request_refresh()
-        elif hvac_mode == HVACMode.COOL:
-            if self.zone.climate_operation_mode in [1, 2, 3, 4, 5]:
-                await self.zone.call_scene(self.zone.climate_operation_mode + 9, 48)
-                await self.coordinator.async_request_refresh()
-            elif self.zone.climate_operation_mode not in [6, 10, 11, 12, 13, 14]:
-                await self.zone.call_scene(
-                    6 if self.zone.climate_operation_mode == 7 else 11, 48
-                )
-                await self.coordinator.async_request_refresh()
+        new_climate_operation_mode = self._get_new_climate_operation_mode(
+            self.zone.climate_operation_mode, hvac_mode
+        )
+        await self._async_set_climate_operation_mode(new_climate_operation_mode)
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set preset mode."""
@@ -229,8 +246,7 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
         scene_id = PRESET_TO_SCENE[preset_mode]
         if self.zone.climate_operation_mode >= 9 and scene_id <= 5:
             scene_id += 9
-        await self.zone.call_scene(scene_id, 48)
-        await self.coordinator.async_request_refresh()
+        await self._async_set_climate_operation_mode(scene_id)
 
     async def async_turn_on(self) -> None:
         """Turn the entity on."""
@@ -254,6 +270,7 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
         _LOGGER.debug(
             f"_handle_coordinator_update ({self.zone.climate_operation_mode})"
         )
+        self._target_climate_operation_mode = self.zone.climate_operation_mode
         self.async_write_ha_state()
 
     @property
