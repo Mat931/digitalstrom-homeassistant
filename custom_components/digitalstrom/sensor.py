@@ -287,19 +287,19 @@ async def async_setup_entry(
 ) -> None:
     """Set up the sensor platform."""
     apartment = hass.data[DOMAIN][config_entry.data[CONF_DSUID]]["apartment"]
+    circuit_sensors = []
+    for circuit in apartment.circuits.values():
+        for sensor in circuit.sensors.values():
+            circuit_sensors.append(DigitalstromMeterSensor(sensor))
+    _LOGGER.debug("Adding %i circuit sensors", len(circuit_sensors))
+    async_add_entities(circuit_sensors)
+
     sensors = []
     for device in apartment.devices.values():
         for sensor in device.sensors.values():
             sensors.append(DigitalstromSensor(sensor))
     _LOGGER.debug("Adding %i sensors", len(sensors))
     async_add_entities(sensors)
-
-    circuit_sensors = []
-    for circuit in apartment.circuits.values():
-        for sensor in circuit.sensors.values():
-            circuit_sensors.append(DigitalstromMeterSensor(sensor))
-    async_add_entities(circuit_sensors)
-    _LOGGER.debug("Adding %i circuit sensors", len(circuit_sensors))
 
 
 class DigitalstromSensor(SensorEntity, DigitalstromEntity):
