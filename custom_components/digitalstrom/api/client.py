@@ -67,7 +67,7 @@ class DigitalstromClient:
                     try:
                         data = await response.json()
                     except json.decoder.JSONDecodeError as e:
-                        raise ServerError(f"Failed to decode JSON: {e}") from None
+                        raise ServerError(f"Failed to decode JSON: {e}") from e
                     if (is_ok := data.get("ok")) and is_ok:
                         if result := data.get("result"):
                             return result
@@ -83,11 +83,11 @@ class DigitalstromClient:
                     raise ServerError(f"Unexpected JSON structure received: {data}")
 
             except aiohttp.client_exceptions.ServerFingerprintMismatch as e:
-                raise InvalidCertificate(e) from None
+                raise InvalidCertificate(e) from e
             except aiohttp.client_exceptions.ClientConnectorCertificateError as e:
-                raise InvalidCertificate(e) from None
+                raise InvalidCertificate(e) from e
             except aiohttp.ClientError as e:
-                raise CannotConnect(e) from None
+                raise CannotConnect(e) from e
 
     async def _request_session_token(self) -> str:
         data = await self._request_raw(
@@ -185,7 +185,7 @@ class DigitalstromClient:
                     except Exception as e:
                         pass
         except aiohttp.ClientError as e:
-            raise CannotConnect(e) from None
+            raise CannotConnect(e) from e
 
     async def stop_event_listener(self) -> None:
         # Stop the event listener
