@@ -199,7 +199,7 @@ class DigitalstromApartment:
                         extra_data["group_id"] = group_id
                         extra_data["zone_id"] = zone_id
                         device.button.update("call_group_scene", extra_data)
-            elif name in ["buttonClick", "buttonClickBus"]:
+            elif name == "buttonClick":
                 dsuid = data["source"]["dsid"]
                 button_index = int(data["properties"]["buttonIndex"])
                 if (
@@ -207,14 +207,6 @@ class DigitalstromApartment:
                     and (device.button is not None)
                     and (button_index == 0)
                 ):
-                    if name == "buttonClickBus":
-                        device.button.bus_event_received = time.time()
-                    elif (device.button.bus_event_received is not None) and (
-                        device.button.bus_event_received
-                        > time.time() - BUTTON_BUS_EVENT_TIMEOUT
-                    ):
-                        self.logger.debug(f"Ignoring repeated event")
-                        return
                     extra_data = {}
                     extra_data["click_type"] = int(data["properties"]["clickType"])
                     extra_data["hold_count"] = int(
