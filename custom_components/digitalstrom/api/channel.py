@@ -83,6 +83,7 @@ class DigitalstromOutputChannel(DigitalstromChannel):
 class DigitalstromButtonChannel(DigitalstromChannel):
     def __init__(self, device: DigitalstromDevice):
         super().__init__(device, 0)
+        self.bus_event_received = None
 
 
 class DigitalstromMeterSensorChannel(DigitalstromChannel):

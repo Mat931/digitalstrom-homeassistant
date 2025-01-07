@@ -1,6 +1,8 @@
 import logging
+import time
 
 from .client import DigitalstromClient
+from .const import BUTTON_BUS_EVENT_TIMEOUT
 
 APARTMENT_SCENES: list = [
     ("Auto Standby", 64, None, None, None),
@@ -169,11 +171,19 @@ class DigitalstromApartment:
                 ):
                     device.availability_callback(True)
 
-            elif name == "callScene":
+            elif name in ["callScene", "callSceneBus"]:
                 dsuid = data["properties"].get(
                     "originDSUID", data["source"].get("dsid", None)
                 )
                 if (device := self.devices.get(dsuid)) and (device.button is not None):
+                    if name == "callSceneBus":
+                        device.button.bus_event_received = time.time()
+                    elif (device.button.bus_event_received is not None) and (
+                        device.button.bus_event_received
+                        > time.time() - BUTTON_BUS_EVENT_TIMEOUT
+                    ):
+                        self.logger.debug(f"Ignoring repeated event")
+                        return
                     scene_id = data["properties"]["sceneID"]
                     if data["source"]["isDevice"]:
                         extra_data = {}
@@ -189,7 +199,7 @@ class DigitalstromApartment:
                         extra_data["group_id"] = group_id
                         extra_data["zone_id"] = zone_id
                         device.button.update("call_group_scene", extra_data)
-            elif name == "buttonClick":
+            elif name in ["buttonClick", "buttonClickBus"]:
                 dsuid = data["source"]["dsid"]
                 button_index = int(data["properties"]["buttonIndex"])
                 if (
@@ -197,6 +207,14 @@ class DigitalstromApartment:
                     and (device.button is not None)
                     and (button_index == 0)
                 ):
+                    if name == "buttonClickBus":
+                        device.button.bus_event_received = time.time()
+                    elif (device.button.bus_event_received is not None) and (
+                        device.button.bus_event_received
+                        > time.time() - BUTTON_BUS_EVENT_TIMEOUT
+                    ):
+                        self.logger.debug(f"Ignoring repeated event")
+                        return
                     extra_data = {}
                     extra_data["click_type"] = int(data["properties"]["clickType"])
                     extra_data["hold_count"] = int(
