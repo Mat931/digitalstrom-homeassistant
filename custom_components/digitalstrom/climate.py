@@ -267,9 +267,6 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        _LOGGER.debug(
-            f"_handle_coordinator_update ({self.zone.climate_operation_mode})"
-        )
         self._target_climate_operation_mode = self.zone.climate_operation_mode
         self.async_write_ha_state()
 
