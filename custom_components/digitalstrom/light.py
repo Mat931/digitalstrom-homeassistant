@@ -6,6 +6,8 @@ from homeassistant.components.light import (
     ATTR_COLOR_TEMP_KELVIN,
     ATTR_HS_COLOR,
     ATTR_XY_COLOR,
+    DEFAULT_MAX_KELVIN,
+    DEFAULT_MIN_KELVIN,
     ColorMode,
     LightEntity,
 )
@@ -86,6 +88,8 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
         self._attr_should_poll = True
         self.entity_id = f"{DOMAIN}.{self.device.dsuid}_{brightness_channel.index}"
         self._attr_name = self.device.name
+        self._attr_min_color_temp_kelvin = DEFAULT_MIN_KELVIN
+        self._attr_max_color_temp_kelvin = DEFAULT_MAX_KELVIN
 
         color_modes = []
         if self.dimmable:
