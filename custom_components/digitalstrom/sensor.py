@@ -403,7 +403,8 @@ class DigitalstromMeterSensor(SensorEntity):
         return self._state
 
     async def async_update(self, **kwargs) -> None:
-        if self.channel.index == "energy":
-            self._state = await self.channel.get_value() / 3600000
+        value = await self.channel.get_value()
+        if self.channel.index == "energy" and value is not None:
+            self._state = value / 3600000
         else:
-            self._state = await self.channel.get_value()
+            self._state = value
