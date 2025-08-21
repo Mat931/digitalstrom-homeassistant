@@ -1,12 +1,12 @@
 # Debug-Log abrufen
 
-Klicken Sie auf die "MY"-Schaltfläche unten, um die Übersichtsseite der digitalSTROM-Integration zu öffnen, und dann auf "Debug-Protokoll aktivieren".
+Klicken Sie auf die "MY"-Schaltfläche unten, um die Übersichtsseite der digitalSTROM-Integration zu öffnen, öffnen Sie das Dreipunktmenü oben rechts und wählen Sie "Debug-Protokoll aktivieren".
 
 Solange das Debug-Protokoll aktiv ist, werden die Debug-Meldungen dieser Integration gesammelt.
 
-Verwenden Sie das Dreipunktmenü rechts, um die Integration neu zu laden und warten Sie, bis der Fehler, den Sie melden, ausgelöst wurde.
+Verwenden Sie das Dreipunktmenü rechts neben dem Eintrag der Integration, um die Integration neu zu laden und warten Sie, bis der Fehler, den Sie melden, ausgelöst wurde.
 
-Klicken Sie dann auf "Debug-Protokoll deaktivieren", dies lädt eine Datei mit den gesammelten Log-Meldungen herunter. Senden Sie diese Datei an die Entwickler der Integration.
+Klicken Sie dann auf "Deaktivieren" um das Debug-Protokoll zu deaktivieren, dies lädt eine Datei mit den gesammelten Log-Meldungen herunter. Senden Sie diese Datei an die Entwickler der Integration.
 
 [![Open your Home Assistant instance and show an integration.](https://my.home-assistant.io/badges/integration.svg)](https://my.home-assistant.io/redirect/integration/?domain=digitalstrom)
 
