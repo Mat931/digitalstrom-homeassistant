@@ -1,12 +1,12 @@
 # Getting a debug log
 
-Click the MY button below to open the overview page of the digitalSTROM integration, then click 'Enable debug logging'.
+Click the MY button below to open the overview page of the digitalSTROM integration, then click the three-dot menu on the top right and select 'Enable debug logging'.
 
 While debug logging is active, the debug messages from this integration are collected.
 
-Use the three-dot menu on the right to reload the integration and wait until the error you're reporting was triggered.
+Use the three-dot menu to the right of the integration entry to reload the integration and wait until the error you're reporting was triggered.
 
-Then click 'Disable debug logging', this will download a file with the collected log messages. Send this file to the integration's maintainers.
+Then click 'Disable' to disable debug logging, this will download a file with the collected log messages. Send this file to the integration's maintainer(s).
 
 [![Open your Home Assistant instance and show an integration.](https://my.home-assistant.io/badges/integration.svg)](https://my.home-assistant.io/redirect/integration/?domain=digitalstrom)
 
