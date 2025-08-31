@@ -71,6 +71,8 @@ class DigitalstromClient:
                     if (is_ok := data.get("ok")) and is_ok:
                         if result := data.get("result"):
                             return result
+                        elif status := data.get("status"):
+                            return {"status": status}
                         return {}
                     elif message := data.get("message"):
                         if (

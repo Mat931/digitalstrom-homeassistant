@@ -3,7 +3,6 @@ from datetime import timedelta
 from typing import Any
 
 import async_timeout
-
 from homeassistant.components.climate import (
     ATTR_HVAC_MODE,
     PRESET_AWAY,

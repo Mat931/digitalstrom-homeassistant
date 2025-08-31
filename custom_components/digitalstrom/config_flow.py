@@ -8,7 +8,6 @@ from typing import Any
 from urllib.parse import urlparse
 
 import voluptuous as vol
-
 from homeassistant import config_entries
 from homeassistant.components import ssdp, zeroconf
 from homeassistant.const import (
