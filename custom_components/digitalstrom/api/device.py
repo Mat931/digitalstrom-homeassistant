@@ -84,10 +84,9 @@ class DigitalstromDevice:
             f"device/callScene?dsuid={self.dsuid}&sceneNumber={scene}{force_str}"
         )
 
-    async def undo_scene(self, scene: int, force: bool = False) -> None:
-        force_str = "&force=true" if force else ""
+    async def undo_scene(self, scene: int) -> None:
         await self.client.request(
-            f"device/undoScene?dsuid={self.dsuid}&sceneNumber={scene}{force_str}"
+            f"device/undoScene?dsuid={self.dsuid}&sceneNumber={scene}"
         )
 
     def _load_general(self, data: dict) -> None:

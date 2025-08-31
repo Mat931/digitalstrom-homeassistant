@@ -37,7 +37,7 @@ class DigitalstromApartmentScene(DigitalstromScene):
 
     async def undo(self, force: bool = False) -> None:
         if self.undo_number is None:
-            await self.apartment.undo_scene(self.call_number, force)
+            await self.apartment.undo_scene(self.call_number)
         else:
             await self.apartment.call_scene(self.undo_number, force)
 
@@ -72,5 +72,5 @@ class DigitalstromZoneScene(DigitalstromScene):
     async def call(self, force: bool = False) -> None:
         await self.zone.call_scene(self.number, self.group, force)
 
-    async def undo(self, force: bool = False) -> None:
-        await self.zone.undo_scene(self.number, self.group, force)
+    async def undo(self) -> None:
+        await self.zone.undo_scene(self.number, self.group)

@@ -50,9 +50,8 @@ class DigitalstromApartment:
         force_str = "&force=true" if force else ""
         await self.client.request(f"apartment/callScene?sceneNumber={scene}{force_str}")
 
-    async def undo_scene(self, scene: int, force: bool = False) -> None:
-        force_str = "&force=true" if force else ""
-        await self.client.request(f"apartment/undoScene?sceneNumber={scene}{force_str}")
+    async def undo_scene(self, scene: int) -> None:
+        await self.client.request(f"apartment/undoScene?sceneNumber={scene}")
 
     def find_split_devices(self) -> None:
         devices = sorted(self.devices.values(), key=lambda x: int(x.dsuid, 16))

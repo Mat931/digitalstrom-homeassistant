@@ -28,13 +28,10 @@ class DigitalstromZone:
             f"zone/callScene?id={self.zone_id}&sceneNumber={scene}{group_str}{force_str}"
         )
 
-    async def undo_scene(
-        self, scene: int, group_id: int = None, force: bool = False
-    ) -> None:
+    async def undo_scene(self, scene: int, group_id: int = None) -> None:
         group_str = "" if group_id is None else f"&groupID={group_id}"
-        force_str = "&force=true" if force else ""
         await self.client.request(
-            f"zone/undoScene?id={self.zone_id}&sceneNumber={scene}{group_str}{force_str}"
+            f"zone/undoScene?id={self.zone_id}&sceneNumber={scene}{group_str}"
         )
 
     async def set_target_temperature(
