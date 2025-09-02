@@ -335,6 +335,8 @@ class DigitalstromSensor(SensorEntity, DigitalstromEntity):
         )
 
     def update_callback(self, state: float, raw_state: float = None) -> None:
+        if not self.enabled:
+            return
         if state is None:
             return
         if self.entity_description.key == "72":

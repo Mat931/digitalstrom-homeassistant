@@ -202,6 +202,8 @@ class DigitalstromBinarySensor(BinarySensorEntity, DigitalstromEntity):
         )
 
     def update_callback(self, state: bool, raw_state: int = None) -> None:
+        if not self.enabled:
+            return
         self._state = state
         self.async_write_ha_state()
 

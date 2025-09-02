@@ -82,6 +82,8 @@ class DigitalstromButtonEvent(EventEntity, DigitalstromEntity):
 
     @callback
     def update_callback(self, event: str, extra_data: dict = None) -> None:
+        if not self.enabled:
+            return
         if event == "button":
             event = BUTTON_PRESS_TYPES.get(extra_data["click_type"], "unknown")
             if not event == "unknown":
