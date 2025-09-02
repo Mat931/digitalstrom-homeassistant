@@ -33,6 +33,7 @@ class DigitalstromDevice:
         self.available = False
         self.availability_callbacks = []
         self.reading_power_state_unsupported = False
+        self.child_devices = 0
 
     def availability_callback(self, available: bool, call_parent: bool = False) -> None:
         if not self.available == available:

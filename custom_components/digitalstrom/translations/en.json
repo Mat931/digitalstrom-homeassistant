@@ -24,6 +24,83 @@
         }
     },
     "entity": {
+        "binary_sensor": {
+            "unknown_binary_input": {
+                "name": "Unknown binary input (type {sensor_type}){name}"
+            },
+            "binary_input": {
+                "name": "Binary input{name}"
+            },
+            "presence": {
+                "name": "Presence{name}"
+            },
+            "brightness": {
+                "name": "Brightness{name}"
+            },
+            "presence_in_darkness": {
+                "name": "Presence in darkness{name}"
+            },
+            "twilight": {
+                "name": "Twilight{name}"
+            },
+            "motion": {
+                "name": "Motion{name}"
+            },
+            "motion_in_darkness": {
+                "name": "Motion in darkness{name}"
+            },
+            "smoke": {
+                "name": "Smoke{name}"
+            },
+            "wind_strength_above_limit": {
+                "name": "Wind strength above limit{name}"
+            },
+            "rain": {
+                "name": "Rain{name}"
+            },
+            "sun": {
+                "name": "Sun{name}"
+            },
+            "temperature_below_limit": {
+                "name": "Temperature below limit{name}"
+            },
+            "battery": {
+                "name": "Battery{name}"
+            },
+            "window": {
+                "name": "Window{name}"
+            },
+            "door": {
+                "name": "Door{name}"
+            },
+            "window_tilt": {
+                "name": "Window tilt{name}"
+            },
+            "garage_door": {
+                "name": "Garage door{name}"
+            },
+            "sun_protection": {
+                "name": "Sun protection{name}"
+            },
+            "frost": {
+                "name": "Frost{name}"
+            },
+            "heating_system": {
+                "name": "Heating system{name}"
+            },
+            "warm_water": {
+                "name": "Warm water{name}"
+            },
+            "initialization": {
+                "name": "Initialization{name}"
+            },
+            "malfunction": {
+                "name": "Malfunction{name}"
+            },
+            "service_required": {
+                "name": "Service required{name}"
+            }
+        },
         "sensor": {
             "unknown_sensor": {
                 "name": "Unknown sensor (type {sensor_type})"

@@ -72,6 +72,7 @@ class DigitalstromApartment:
                     prev if prev.parent_device is None else prev.parent_device
                 )
                 curr.parent_device = parent_device
+                parent_device.child_devices += 1
                 self.logger.debug(f"Merging devices {parent_device.dsuid} {curr.dsuid}")
 
     async def get_devices(self) -> dict:

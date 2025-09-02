@@ -24,6 +24,83 @@
         }
     },
     "entity": {
+        "binary_sensor": {
+            "unknown_binary_input": {
+                "name": "Unbekannter Tastereingang (Typ {sensor_type}){name}"
+            },
+            "binary_input": {
+                "name": "Tastereingang{name}"
+            },
+            "presence": {
+                "name": "Anwesenheit{name}"
+            },
+            "brightness": {
+                "name": "Helligkeit{name}"
+            },
+            "presence_in_darkness": {
+                "name": "Anwesenheit bei Dunkelheit{name}"
+            },
+            "twilight": {
+                "name": "Dämmerung{name}"
+            },
+            "motion": {
+                "name": "Bewegung{name}"
+            },
+            "motion_in_darkness": {
+                "name": "Bewegung bei Dunkelheit{name}"
+            },
+            "smoke": {
+                "name": "Rauch{name}"
+            },
+            "wind_strength_above_limit": {
+                "name": "Windstärke über dem Grenzwert{name}"
+            },
+            "rain": {
+                "name": "Regen{name}"
+            },
+            "sun": {
+                "name": "Sonne{name}"
+            },
+            "temperature_below_limit": {
+                "name": "Temperatur unter dem Grenzwert{name}"
+            },
+            "battery": {
+                "name": "Akku{name}"
+            },
+            "window": {
+                "name": "Fenster{name}"
+            },
+            "door": {
+                "name": "Tür{name}"
+            },
+            "window_tilt": {
+                "name": "Fenster gekippt{name}"
+            },
+            "garage_door": {
+                "name": "Garagentor{name}"
+            },
+            "sun_protection": {
+                "name": "Sonnenschutz{name}"
+            },
+            "frost": {
+                "name": "Frost{name}"
+            },
+            "heating_system": {
+                "name": "Heizungssystem{name}"
+            },
+            "warm_water": {
+                "name": "Warmwasser{name}"
+            },
+            "initialization": {
+                "name": "Initialisierung{name}"
+            },
+            "malfunction": {
+                "name": "Fehlfunktion{name}"
+            },
+            "service_required": {
+                "name": "Wartung benötigt{name}"
+            }
+        },
         "sensor": {
             "unknown_sensor": {
                 "name": "Unbekannter Sensor (Typ {sensor_type})"

@@ -344,7 +344,6 @@ class DigitalstromSensor(SensorEntity, DigitalstromEntity):
         self._state: int | None = None
         self.channel = sensor_channel
         self.index = sensor_channel.index
-        self.valid = False
         self.set_type(sensor_channel.sensor_type)
         self._attr_suggested_display_precision = 1
         self.entity_id = f"{DOMAIN}.{self.device.dsuid}_{self.index}"
@@ -400,7 +399,6 @@ class DigitalstromMeterSensor(SensorEntity):
         self._has_state = False
         self._attributes: dict[str, Any] = {}
         self._state: int | None = None
-        self.valid = False
         self.entity_id = f"{DOMAIN}.{self.circuit.dsuid}_{self.channel.index}"
         self._state = None
         self._attr_has_entity_name = True
