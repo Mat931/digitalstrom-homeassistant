@@ -76,7 +76,7 @@ class DigitalstromApartment:
 
     async def get_devices(self) -> dict:
         data = await self.client.request("apartment/getDevices")
-        self.logger.debug(f"get_devices {data}")
+        self.logger.debug(f"getDevices {data}")
         for d in data:
             if (dsuid := d.get("dSUID")) and (len(dsuid) > 0):
                 if dsuid not in self.devices.keys():
@@ -90,6 +90,7 @@ class DigitalstromApartment:
 
     async def get_circuits(self) -> dict:
         data = await self.client.request("apartment/getCircuits")
+        self.logger.debug(f"getCircuits {data}")
         if circuits := data.get("circuits"):
             for d in circuits:
                 if (dsuid := d.get("dSUID")) and (len(dsuid) > 0):
@@ -103,6 +104,7 @@ class DigitalstromApartment:
 
     async def get_zones(self) -> dict:
         data = await self.client.request("apartment/getReachableGroups")
+        self.logger.debug(f"getReachableGroups {data}")
         if zones := data.get("zones"):
             for z in zones:
                 if "zoneID" in z:
