@@ -1,7 +1,8 @@
 {
     "config": {
         "abort": {
-            "already_configured": "Device is already configured"
+            "already_configured": "Device is already configured",
+            "reauth_successful": "Re-authentication was successful"
         },
         "error": {
             "cannot_connect": "Failed to connect",
@@ -19,6 +20,118 @@
                     "ssl": "SHA-256 fingerprint of the server certificate",
                     "username": "Username"
                 }
+            }
+        }
+    },
+    "entity": {
+        "sensor": {
+            "unknown_sensor": {
+                "name": "Unknown sensor (type {sensor_type})"
+            },
+            "active_power": {
+                "name": "Active Power"
+            },
+            "output_current": {
+                "name": "Output Current"
+            },
+            "energy": {
+                "name": "Energy"
+            },
+            "room_temperature": {
+                "name": "Room Temperature"
+            },
+            "outdoor_temperature": {
+                "name": "Outdoor Temperature"
+            },
+            "room_brightness": {
+                "name": "Room Brightness"
+            },
+            "outdoor_brightness": {
+                "name": "Outdoor Brightness"
+            },
+            "room_relative_humidity": {
+                "name": "Room Relative Humidity"
+            },
+            "outdoor_relative_humidity": {
+                "name": "Outdoor Relative Humidity"
+            },
+            "air_pressure": {
+                "name": "Air pressure"
+            },
+            "wind_gust_speed": {
+                "name": "Wind gust speed"
+            },
+            "wind_gust_direction": {
+                "name": "Wind gust direction"
+            },
+            "wind_speed_average": {
+                "name": "Wind speed average"
+            },
+            "wind_direction": {
+                "name": "Wind direction"
+            },
+            "precipitation_intensity_of_last_hour": {
+                "name": "Precipitation intensity of last hour"
+            },
+            "room_carbon_dioxide_concentration": {
+                "name": "Room Carbon Dioxide Concentration"
+            },
+            "room_carbon_monoxide_concentration": {
+                "name": "Room Carbon Monoxide Concentration"
+            },
+            "sound_pressure_level": {
+                "name": "Sound Pressure Level"
+            },
+            "room_temperature_set_point": {
+                "name": "Room Temperature Set Point"
+            },
+            "room_temperature_control_variable": {
+                "name": "Room Temperature Control Variable"
+            },
+            "apparent_power": {
+                "name": "Apparent Power"
+            },
+            "temperature": {
+                "name": "Temperature"
+            },
+            "brightness": {
+                "name": "Brightness"
+            },
+            "relative_humidity": {
+                "name": "Relative Humidity"
+            },
+            "generated_active_power": {
+                "name": "Generated Active Power"
+            },
+            "generated_energy": {
+                "name": "Generated Energy"
+            },
+            "water_quantity": {
+                "name": "Water Quantity"
+            },
+            "water_flow_rate": {
+                "name": "Water Flow Rate"
+            },
+            "length": {
+                "name": "Length"
+            },
+            "mass": {
+                "name": "Mass"
+            },
+            "time": {
+                "name": "Time"
+            },
+            "sun_azimuth": {
+                "name": "Sun azimuth"
+            },
+            "sun_elevation": {
+                "name": "Sun elevation"
+            },
+            "meter_power": {
+                "name": "Power"
+            },
+            "meter_energy": {
+                "name": "Energy"
             }
         }
     }

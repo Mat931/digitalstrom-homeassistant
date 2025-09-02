@@ -1,7 +1,8 @@
 {
     "config": {
         "abort": {
-            "already_configured": "Gerät ist bereits konfiguriert"
+            "already_configured": "Gerät ist bereits konfiguriert",
+            "reauth_successful": "Erfolgreich neu konfiguriert"
         },
         "error": {
             "cannot_connect": "Verbindung fehlgeschlagen",
@@ -13,12 +14,124 @@
         "step": {
             "user": {
                 "data": {
-                    "host": "Host",
+                    "host": "Serveradresse",
                     "password": "Passwort",
                     "port": "Port",
                     "ssl": "SHA-256-Fingerabdruck des Server-Zertifikats",
                     "username": "Benutzername"
                 }
+            }
+        }
+    },
+    "entity": {
+        "sensor": {
+            "unknown_sensor": {
+                "name": "Unbekannter Sensor (Typ {sensor_type})"
+            },
+            "active_power": {
+                "name": "Wirkleistung"
+            },
+            "output_current": {
+                "name": "Ausgangsstrom"
+            },
+            "energy": {
+                "name": "Energie"
+            },
+            "room_temperature": {
+                "name": "Innentemperatur"
+            },
+            "outdoor_temperature": {
+                "name": "Außentemperatur"
+            },
+            "room_brightness": {
+                "name": "Innenhelligkeit"
+            },
+            "outdoor_brightness": {
+                "name": "Außenhelligkeit"
+            },
+            "room_relative_humidity": {
+                "name": "Innenluftfeuchtigkeit"
+            },
+            "outdoor_relative_humidity": {
+                "name": "Außenluftfeuchtigkeit"
+            },
+            "air_pressure": {
+                "name": "Luftdruck"
+            },
+            "wind_gust_speed": {
+                "name": "Windböen-Geschwindigkeit"
+            },
+            "wind_gust_direction": {
+                "name": "Windböen-Richtung"
+            },
+            "wind_speed_average": {
+                "name": "Durchschnittliche Windgeschwindigkeit"
+            },
+            "wind_direction": {
+                "name": "Windrichtung"
+            },
+            "precipitation_intensity_of_last_hour": {
+                "name": "Niederschlags-Intensität der letzten Stunde"
+            },
+            "room_carbon_dioxide_concentration": {
+                "name": "Kohlendioxid-Konzentration innen"
+            },
+            "room_carbon_monoxide_concentration": {
+                "name": "Kohlenmonoxid-Konzentration innen"
+            },
+            "sound_pressure_level": {
+                "name": "Schalldruckpegel"
+            },
+            "room_temperature_set_point": {
+                "name": "Raumtemperatur Sollwert"
+            },
+            "room_temperature_control_variable": {
+                "name": "Raumtemperatur Steuervariable"
+            },
+            "apparent_power": {
+                "name": "Scheinleistung"
+            },
+            "temperature": {
+                "name": "Temperatur"
+            },
+            "brightness": {
+                "name": "Helligkeit"
+            },
+            "relative_humidity": {
+                "name": "Relative Luftfeuchtigkeit"
+            },
+            "generated_active_power": {
+                "name": "Erzeugte Wirkleistung"
+            },
+            "generated_energy": {
+                "name": "Erzeugte Energie"
+            },
+            "water_quantity": {
+                "name": "Wassermenge"
+            },
+            "water_flow_rate": {
+                "name": "Wasser Durchflussrate"
+            },
+            "length": {
+                "name": "Länge"
+            },
+            "mass": {
+                "name": "Masse"
+            },
+            "time": {
+                "name": "Zeit"
+            },
+            "sun_azimuth": {
+                "name": "Sonnen-Azimut"
+            },
+            "sun_elevation": {
+                "name": "Sonnenhöhe"
+            },
+            "meter_power": {
+                "name": "Leistung"
+            },
+            "meter_energy": {
+                "name": "Energie"
             }
         }
     }
