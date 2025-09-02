@@ -2,6 +2,7 @@ from .apartment import DigitalstromApartment
 from .client import DigitalstromClient
 from .exceptions import ServerError
 
+
 class DigitalstromCircuit:
     def __init__(
         self, client: DigitalstromClient, apartment: DigitalstromApartment, dsuid: str

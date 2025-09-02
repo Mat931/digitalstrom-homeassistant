@@ -76,11 +76,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await apartment.get_zones()
         await apartment.get_circuits()
         await apartment.get_devices()
-        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     except (InvalidAuth, InvalidCertificate) as ex:
         raise ConfigEntryAuthFailed(ex) from ex
     except (CannotConnect, ServerError) as ex:
         raise ConfigEntryNotReady(ex) from ex
+
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     async def start_watchdog(event=None):
         """Start websocket watchdog."""
