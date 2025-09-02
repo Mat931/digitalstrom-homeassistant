@@ -60,13 +60,16 @@ class DigitalstromUpdateEntity(UpdateEntity):
             sw_version=self.circuit.sw_version,
         )
 
+    @property
+    def available(self) -> bool:
+        return self.circuit.available
+
     async def async_install(
         self, version: str | None, backup: bool, **kwargs: Any
     ) -> None:
         """Install an update."""
         _LOGGER.debug(f"{self.circuit.name}: Starting update")
         self._attr_in_progress = True
-        self.async_write_ha_state()
         await self.circuit.install_update()
         while (status := await self.circuit.update_available()) != "ok":
             _LOGGER.debug(
@@ -74,8 +77,8 @@ class DigitalstromUpdateEntity(UpdateEntity):
             )
             await asyncio.sleep(10)
         _LOGGER.debug(f"{self.circuit.name}: Update done")
+        await self.circuit.apartment.get_circuits()
         self._attr_in_progress = False
-        self.async_write_ha_state()
 
     async def async_update(self) -> None:
         """Update entity state.
@@ -87,4 +90,3 @@ class DigitalstromUpdateEntity(UpdateEntity):
         self._attr_latest_version = (
             "Needs Update" if status == "update" else self.circuit.sw_version
         )
-        self.async_write_ha_state()
