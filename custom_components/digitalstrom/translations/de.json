@@ -148,6 +148,122 @@
                 "name": "Taster (Temperatursteuerung){name}"
             }
         },
+        "scene": {
+            "zone_scene_unknown": {
+                "name": "Gruppe {group}: Szene {scene}"
+            },
+            "zone_scene_unknown_named": {
+                "name": "Gruppe {group}: {name}"
+            },
+            "zone_scene_light": {
+                "name": "Licht: Szene {scene}"
+            },
+            "zone_scene_light_named": {
+                "name": "Licht: {name}"
+            },
+            "zone_scene_light_off": {
+                "name": "Licht: Aus"
+            },
+            "zone_scene_light_preset": {
+                "name": "Licht: Stimmung {preset}"
+            },
+            "zone_scene_cover": {
+                "name": "Schatten: Szene {scene}"
+            },
+            "zone_scene_cover_named": {
+                "name": "Schatten: {name}"
+            },
+            "zone_scene_cover_off": {
+                "name": "Schatten: Aus"
+            },
+            "zone_scene_cover_preset": {
+                "name": "Schatten: Stimmung {preset}"
+            },
+            "zone_scene_heating": {
+                "name": "Klima: Szene {scene}"
+            },
+            "zone_scene_heating_named": {
+                "name": "Klima: {name}"
+            },
+            "zone_scene_audio": {
+                "name": "Audio: Szene {scene}"
+            },
+            "zone_scene_audio_named": {
+                "name": "Audio: {name}"
+            },
+            "zone_scene_audio_off": {
+                "name": "Audio: Aus"
+            },
+            "zone_scene_audio_preset": {
+                "name": "Audio: Stimmung {preset}"
+            },
+            "zone_scene_video": {
+                "name": "Video: Szene {scene}"
+            },
+            "zone_scene_video_named": {
+                "name": "Video: {name}"
+            },
+            "zone_scene_video_off": {
+                "name": "Video: Aus"
+            },
+            "zone_scene_video_preset": {
+                "name": "Video: Stimmung {preset}"
+            },
+            "zone_scene_security": {
+                "name": "Sicherheit: Szene {scene}"
+            },
+            "zone_scene_security_named": {
+                "name": "Sicherheit: {name}"
+            },
+            "zone_scene_access": {
+                "name": "Zugang: Szene {scene}"
+            },
+            "zone_scene_access_named": {
+                "name": "Zugang: {name}"
+            },
+            "zone_scene_joker": {
+                "name": "Joker: Szene {scene}"
+            },
+            "zone_scene_joker_named": {
+                "name": "Joker: {name}"
+            },
+            "zone_scene_cooling": {
+                "name": "Kühlung: Szene {scene}"
+            },
+            "zone_scene_cooling_named": {
+                "name": "Kühlung: {name}"
+            },
+            "zone_scene_ventilation": {
+                "name": "Lüftung: Szene {scene}"
+            },
+            "zone_scene_ventilation_named": {
+                "name": "Lüftung: {name}"
+            },
+            "zone_scene_window": {
+                "name": "Fenster: Szene {scene}"
+            },
+            "zone_scene_window_named": {
+                "name": "Fenster: {name}"
+            },
+            "zone_scene_recirculation": {
+                "name": "Rezirkulation: Szene {scene}"
+            },
+            "zone_scene_recirculation_named": {
+                "name": "Rezirkulation: {name}"
+            },
+            "zone_scene_awnings": {
+                "name": "Markisen: Szene {scene}"
+            },
+            "zone_scene_awnings_named": {
+                "name": "Markisen: {name}"
+            },
+            "zone_scene_temperature_control": {
+                "name": "Temperatursteuerung: Szene {scene}"
+            },
+            "zone_scene_temperature_control_named": {
+                "name": "Temperatursteuerung: {name}"
+            }
+        },
         "sensor": {
             "unknown_sensor": {
                 "name": "Unbekannter Sensor (Typ {sensor_type})"

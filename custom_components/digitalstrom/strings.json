@@ -148,6 +148,122 @@
         "name": "Button (Temperature Control){name}"
       }
     },
+    "scene": {
+      "zone_scene_unknown": {
+        "name": "Group {group}: scene {scene}"
+      },
+      "zone_scene_unknown_named": {
+        "name": "Group {group}: {name}"
+      },
+      "zone_scene_light": {
+        "name": "Light: scene {scene}"
+      },
+      "zone_scene_light_named": {
+        "name": "Light: {name}"
+      },
+      "zone_scene_light_off": {
+        "name": "Light: off"
+      },
+      "zone_scene_light_preset": {
+        "name": "Light: preset {preset}"
+      },
+      "zone_scene_cover": {
+        "name": "Cover: scene {scene}"
+      },
+      "zone_scene_cover_named": {
+        "name": "Cover: {name}"
+      },
+      "zone_scene_cover_off": {
+        "name": "Cover: off"
+      },
+      "zone_scene_cover_preset": {
+        "name": "Cover: preset {preset}"
+      },
+      "zone_scene_heating": {
+        "name": "Heating: scene {scene}"
+      },
+      "zone_scene_heating_named": {
+        "name": "Heating: {name}"
+      },
+      "zone_scene_audio": {
+        "name": "Audio: scene {scene}"
+      },
+      "zone_scene_audio_named": {
+        "name": "Audio: {name}"
+      },
+      "zone_scene_audio_off": {
+        "name": "Audio: off"
+      },
+      "zone_scene_audio_preset": {
+        "name": "Audio: preset {preset}"
+      },
+      "zone_scene_video": {
+        "name": "Video: scene {scene}"
+      },
+      "zone_scene_video_named": {
+        "name": "Video: {name}"
+      },
+      "zone_scene_video_off": {
+        "name": "Video: off"
+      },
+      "zone_scene_video_preset": {
+        "name": "Video: preset {preset}"
+      },
+      "zone_scene_security": {
+        "name": "Security: scene {scene}"
+      },
+      "zone_scene_security_named": {
+        "name": "Security: {name}"
+      },
+      "zone_scene_access": {
+        "name": "Access: scene {scene}"
+      },
+      "zone_scene_access_named": {
+        "name": "Access: {name}"
+      },
+      "zone_scene_joker": {
+        "name": "Joker: scene {scene}"
+      },
+      "zone_scene_joker_named": {
+        "name": "Joker: {name}"
+      },
+      "zone_scene_cooling": {
+        "name": "Cooling: scene {scene}"
+      },
+      "zone_scene_cooling_named": {
+        "name": "Cooling: {name}"
+      },
+      "zone_scene_ventilation": {
+        "name": "Ventilation: scene {scene}"
+      },
+      "zone_scene_ventilation_named": {
+        "name": "Ventilation: {name}"
+      },
+      "zone_scene_window": {
+        "name": "Window: scene {scene}"
+      },
+      "zone_scene_window_named": {
+        "name": "Window: {name}"
+      },
+      "zone_scene_recirculation": {
+        "name": "Recirculation: scene {scene}"
+      },
+      "zone_scene_recirculation_named": {
+        "name": "Recirculation: {name}"
+      },
+      "zone_scene_awnings": {
+        "name": "Awnings: scene {scene}"
+      },
+      "zone_scene_awnings_named": {
+        "name": "Awnings: {name}"
+      },
+      "zone_scene_temperature_control": {
+        "name": "Temperature Control: scene {scene}"
+      },
+      "zone_scene_temperature_control_named": {
+        "name": "Temperature Control: {name}"
+      }
+    },
     "sensor": {
       "unknown_sensor": {
         "name": "Unknown sensor (type {sensor_type})"
