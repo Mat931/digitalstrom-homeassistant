@@ -79,7 +79,8 @@ class DigitalstromApartmentSceneSwitch(SwitchEntity):
         self.entity_id = (
             f"{DOMAIN}.{self.scene.apartment.dsuid}_{self.scene.call_number}"
         )
-        self._attr_name = self.scene.name
+        self._attr_has_entity_name = True
+        self._attr_translation_key = self.scene.name.lower().replace(" ", "_")
         self._attr_should_poll = True
         self._attr_unique_id: str = (
             f"{self.scene.apartment.dsuid}_scene{self.scene.call_number}"

@@ -210,6 +210,62 @@
             "meter_energy": {
                 "name": "Energy"
             }
+        },
+        "switch": {
+            "auto_standby": {
+                "name": "Auto Standby"
+            },
+            "standby": {
+                "name": "Standby"
+            },
+            "deep_off": {
+                "name": "Deep Off"
+            },
+            "zone_active": {
+                "name": "Zone Active"
+            },
+            "sleeping": {
+                "name": "Sleeping"
+            },
+            "absent": {
+                "name": "Absent"
+            },
+            "door_bell": {
+                "name": "Door Bell"
+            },
+            "burglary": {
+                "name": "Burglary"
+            },
+            "panic": {
+                "name": "Panic"
+            },
+            "fire": {
+                "name": "Fire"
+            },
+            "alarm_1": {
+                "name": "Alarm 1"
+            },
+            "alarm_2": {
+                "name": "Alarm 2"
+            },
+            "alarm_3": {
+                "name": "Alarm 3"
+            },
+            "alarm_4": {
+                "name": "Alarm 4"
+            },
+            "wind": {
+                "name": "Wind"
+            },
+            "rain": {
+                "name": "Rain"
+            },
+            "hail": {
+                "name": "Hail"
+            },
+            "pollution": {
+                "name": "Pollution"
+            }
         }
     }
 }
