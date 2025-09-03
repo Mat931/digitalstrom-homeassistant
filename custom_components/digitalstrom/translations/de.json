@@ -101,6 +101,53 @@
                 "name": "Wartung benötigt{name}"
             }
         },
+        "event": {
+            "button_event_unknown": {
+                "name": "Taster (Gruppe {group}){name}"
+            },
+            "button_event_light": {
+                "name": "Taster (Licht){name}"
+            },
+            "button_event_cover": {
+                "name": "Taster (Schatten){name}"
+            },
+            "button_event_heating": {
+                "name": "Taster (Klima){name}"
+            },
+            "button_event_audio": {
+                "name": "Taster (Audio){name}"
+            },
+            "button_event_video": {
+                "name": "Taster (Video){name}"
+            },
+            "button_event_security": {
+                "name": "Taster (Sicherheit){name}"
+            },
+            "button_event_access": {
+                "name": "Taster (Zugang){name}"
+            },
+            "button_event_joker": {
+                "name": "Taster (Joker){name}"
+            },
+            "button_event_cooling": {
+                "name": "Taster (Kühlung){name}"
+            },
+            "button_event_ventilation": {
+                "name": "Taster (Lüftung){name}"
+            },
+            "button_event_window": {
+                "name": "Taster (Fenster){name}"
+            },
+            "button_event_recirculation": {
+                "name": "Taster (Rezirkulation){name}"
+            },
+            "button_event_awnings": {
+                "name": "Taster (Markisen){name}"
+            },
+            "button_event_temperature_control": {
+                "name": "Taster (Temperatursteuerung){name}"
+            }
+        },
         "sensor": {
             "unknown_sensor": {
                 "name": "Unbekannter Sensor (Typ {sensor_type})"

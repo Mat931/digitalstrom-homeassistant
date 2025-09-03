@@ -101,6 +101,53 @@
         "name": "Service required{name}"
       }
     },
+    "event": {
+      "button_event_unknown": {
+        "name": "Button (group {group}){name}"
+      },
+      "button_event_light": {
+        "name": "Button (Light){name}"
+      },
+      "button_event_cover": {
+        "name": "Button (Cover){name}"
+      },
+      "button_event_heating": {
+        "name": "Button (Heating){name}"
+      },
+      "button_event_audio": {
+        "name": "Button (Audio){name}"
+      },
+      "button_event_video": {
+        "name": "Button (Video){name}"
+      },
+      "button_event_security": {
+        "name": "Button (Security){name}"
+      },
+      "button_event_access": {
+        "name": "Button (Access){name}"
+      },
+      "button_event_joker": {
+        "name": "Button (Joker){name}"
+      },
+      "button_event_cooling": {
+        "name": "Button (Cooling){name}"
+      },
+      "button_event_ventilation": {
+        "name": "Button (Ventilation){name}"
+      },
+      "button_event_window": {
+        "name": "Button (Window){name}"
+      },
+      "button_event_recirculation": {
+        "name": "Button (Recirculation){name}"
+      },
+      "button_event_awnings": {
+        "name": "Button (Awnings){name}"
+      },
+      "button_event_temperature_control": {
+        "name": "Button (Temperature Control){name}"
+      }
+    },
     "sensor": {
       "unknown_sensor": {
         "name": "Unknown sensor (type {sensor_type})"

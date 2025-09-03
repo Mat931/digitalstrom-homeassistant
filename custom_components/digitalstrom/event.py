@@ -28,18 +28,20 @@ BUTTON_PRESS_TYPES: dict[int, str] = {
 }
 
 GROUP_MAP: dict[int, str] = {
-    1: "Light",
-    2: "Cover",
-    3: "Heating",
-    4: "Audio",
-    5: "Video",
-    8: "Joker",
-    9: "Cooling",
-    10: "Ventilation",
-    11: "Window",
-    12: "Recirculation",
-    13: "Awnings",
-    48: "Temperature Control",
+    1: "button_event_light",
+    2: "button_event_cover",
+    3: "button_event_heating",
+    4: "button_event_audio",
+    5: "button_event_video",
+    6: "button_event_security",
+    7: "button_event_access",
+    8: "button_event_joker",
+    9: "button_event_cooling",
+    10: "button_event_ventilation",
+    11: "button_event_window",
+    12: "button_event_recirculation",
+    13: "button_event_awnings",
+    48: "button_event_temperature_control",
 }
 
 
@@ -64,8 +66,6 @@ class DigitalstromButtonEvent(EventEntity, DigitalstromEntity):
         super().__init__(button.device, "E")
         self.channel = button
         self.group = button.device.button_group
-        self._attr_name = self.device.name
-        self._attr_has_entity_name = False
         self._attr_device_class = EventDeviceClass.BUTTON
         self._attr_event_types = list(
             set(
@@ -76,9 +76,16 @@ class DigitalstromButtonEvent(EventEntity, DigitalstromEntity):
         self.entity_id = f"{DOMAIN}.{self.device.dsuid}"
         if not self.device.button_used:
             self._attr_entity_registry_enabled_default = False
-        if self.group not in [0, 255]:
-            group = GROUP_MAP.get(self.group, f"Group {self.group}")
-            self._attr_name += f" ({group})"
+        self._attr_has_entity_name = True
+        self._attr_translation_key = GROUP_MAP.get(self.group, "button_event_unknown")
+        name = f" ({self.device.name})"
+        if len(self.device.name) == 0:
+            name = ""
+        if self.device.child_devices == 0 and self.device.parent_device is None:
+            name = ""
+        self._attr_translation_placeholders = {"name": name}
+        if self._attr_translation_key == "button_event_unknown":
+            self._attr_translation_placeholders["group"] = str(self.group)
 
     @callback
     def update_callback(self, event: str, extra_data: dict = None) -> None:
