@@ -117,7 +117,8 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
     ):
         super().__init__(coordinator)
         self.zone = zone
-        self._attr_name = f"{self.zone.name} Climate"
+        self._attr_has_entity_name = True
+        self._attr_translation_key = "zone_climate"
         self._attr_unique_id: str = (
             f"{self.zone.apartment.dsuid}_zone{self.zone.zone_id}_climate"
         )

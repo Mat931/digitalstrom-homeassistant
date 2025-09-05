@@ -1,5 +1,6 @@
 import re
 from typing import Self
+
 from .apartment import DigitalstromApartment
 from .client import DigitalstromClient
 from .const import INVERTED_BINARY_INPUTS, NOT_DIMMABLE_OUTPUT_MODES

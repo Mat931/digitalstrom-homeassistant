@@ -101,6 +101,41 @@
         "name": "Service required{name}"
       }
     },
+    "climate": {
+      "zone_climate": {
+        "name": "Climate",
+        "state": {
+          "off": "Off",
+          "heat": "Heat",
+          "cool": "Cool"
+        },
+        "state_attributes": {
+          "current_temperature": {
+            "name": "Current temperature"
+          },
+          "hvac_action": {
+            "state": {
+              "off": "Off",
+              "idle": "Idle",
+              "cooling": "Cooling",
+              "heating": "Heating"
+            }
+          },
+          "preset_mode": {
+            "state": {
+              "off": "Off",
+              "comfort": "Comfort",
+              "eco": "Eco",
+              "away": "Away",
+              "sleep": "Night",
+              "holiday": "Holiday",
+              "passive_cooling": "Passive Cooling",
+              "passive_cooling_off": "Passive Cooling off"
+            }
+          }
+        }
+      }
+    },
     "event": {
       "button_event_unknown": {
         "name": "Button (group {group}){name}"

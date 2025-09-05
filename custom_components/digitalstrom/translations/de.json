@@ -101,6 +101,41 @@
                 "name": "Wartung benötigt{name}"
             }
         },
+        "climate": {
+            "zone_climate": {
+                "name": "Klima",
+                "state": {
+                    "off": "Aus",
+                    "heat": "Heizen",
+                    "cool": "Kühlen"
+                },
+                "state_attributes": {
+                    "current_temperature": {
+                        "name": "Ist-Temperatur"
+                    },
+                    "hvac_action": {
+                        "state": {
+                            "off": "Aus",
+                            "idle": "Leerlauf",
+                            "cooling": "Kühlen",
+                            "heating": "Heizen"
+                        }
+                    },
+                    "preset_mode": {
+                        "state": {
+                            "off": "Aus",
+                            "comfort": "Komfort",
+                            "eco": "Eco",
+                            "away": "Abwesend",
+                            "sleep": "Nacht",
+                            "holiday": "Urlaub",
+                            "passive_cooling": "Passive Kühlung",
+                            "passive_cooling_off": "Passive Kühlung aus"
+                        }
+                    }
+                }
+            }
+        },
         "event": {
             "button_event_unknown": {
                 "name": "Taster (Gruppe {group}){name}"
