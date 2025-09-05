@@ -26,10 +26,10 @@
     "entity": {
         "binary_sensor": {
             "unknown_binary_input": {
-                "name": "Unbekannter Tastereingang (Typ {sensor_type}){name}"
+                "name": "Unbekannter Binär-Eingang (Typ {sensor_type}){name}"
             },
             "binary_input": {
-                "name": "Tastereingang{name}"
+                "name": "Binär-Eingang{name}"
             },
             "presence": {
                 "name": "Anwesenheit{name}"

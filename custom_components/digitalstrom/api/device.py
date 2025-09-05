@@ -1,5 +1,5 @@
 import re
-
+from typing import Self
 from .apartment import DigitalstromApartment
 from .client import DigitalstromClient
 from .const import INVERTED_BINARY_INPUTS, NOT_DIMMABLE_OUTPUT_MODES
@@ -33,7 +33,12 @@ class DigitalstromDevice:
         self.available = False
         self.availability_callbacks = []
         self.reading_power_state_unsupported = False
-        self.child_devices = 0
+        self.unique_device_names = []
+
+    def get_parent(self) -> Self:
+        if self.parent_device not in [None, self]:
+            return self.parent_device.get_parent()
+        return self
 
     def availability_callback(self, available: bool, call_parent: bool = False) -> None:
         if not self.available == available:
@@ -95,6 +100,8 @@ class DigitalstromDevice:
             self.dsid = dsid
         if (name := data.get("name")) and (len(name) > 0):
             self.name = name
+            if len(self.unique_device_names) == 0:
+                self.unique_device_names.append(self.name)
         if (hw_info := data.get("hwInfo")) and (len(hw_info) > 0):
             self.hw_info = hw_info
 

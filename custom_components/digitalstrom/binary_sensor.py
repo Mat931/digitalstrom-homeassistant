@@ -208,7 +208,7 @@ class DigitalstromBinarySensor(BinarySensorEntity, DigitalstromEntity):
         name = f" ({self.device.name})"
         if len(self.device.name) == 0:
             name = ""
-        if self.device.child_devices == 0 and self.device.parent_device is None:
+        if len(self.device.get_parent().unique_device_names) < 2:
             name = ""
         self._attr_translation_placeholders = {"name": name}
         self._attr_device_class = self.entity_description.device_class

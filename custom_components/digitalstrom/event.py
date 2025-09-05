@@ -81,7 +81,7 @@ class DigitalstromButtonEvent(EventEntity, DigitalstromEntity):
         name = f" ({self.device.name})"
         if len(self.device.name) == 0:
             name = ""
-        if self.device.child_devices == 0 and self.device.parent_device is None:
+        if len(self.device.get_parent().unique_device_names) < 2:
             name = ""
         self._attr_translation_placeholders = {"name": name}
         if self._attr_translation_key == "button_event_unknown":
