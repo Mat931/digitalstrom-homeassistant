@@ -99,8 +99,9 @@ class DigitalstromDevice:
     def _load_general(self, data: dict) -> None:
         if (dsid := data.get("id")) and (len(dsid) > 0):
             self.dsid = dsid
-        if (name := data.get("name")) and (len(name) > 0):
-            self.name = name
+        if (name := data.get("name")) is not None:
+            if len(name) > 0:
+                self.name = name
             if len(self.unique_device_names) == 0:
                 self.unique_device_names.append(self.name)
         if (hw_info := data.get("hwInfo")) and (len(hw_info) > 0):

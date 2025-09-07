@@ -18,17 +18,19 @@ class DigitalstromEntity(Entity):
     @property
     def device_info(self) -> DeviceInfo:
         """Return the device info."""
-        parent_device = (
-            self.device
-            if self.device.parent_device is None
-            else self.device.parent_device
-        )
         zone_name = ""
         if zone := self.device.apartment.zones.get(self.device.zone_id):
             zone_name = zone.name
+        parent_device = self.device.get_parent()
+        device_name = parent_device.name
+        if len(device_name) == 0:
+            for n in parent_device.unique_device_names:
+                if len(n) > 0:
+                    device_name = n
+                    break
         return DeviceInfo(
             identifiers={(DOMAIN, parent_device.dsuid)},
-            name=parent_device.name,
+            name=device_name,
             manufacturer=parent_device.manufacturer,
             model=parent_device.hw_info,
             # sw_version=parent_device.sw_version,
