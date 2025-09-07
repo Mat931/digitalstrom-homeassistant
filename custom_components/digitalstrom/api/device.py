@@ -198,26 +198,22 @@ class DigitalstromDevice:
                     self.binary_inputs[index] = binary_input
 
     def _load_outputs(self, data: dict) -> None:
-        if output_mode := data.get("outputMode"):
+        output_mode = data.get("outputMode")
+        if output_mode is not None:
             if output_mode == 0:
                 self.output_dimmable = None
             elif output_mode in NOT_DIMMABLE_OUTPUT_MODES:
                 self.output_dimmable = False
             else:
                 self.output_dimmable = True
-        if (
-            (output_mode := data.get("outputMode"))
-            and output_mode > 0
-            and (output_channels := data.get("outputChannels"))
-            and len(output_channels) > 0
-        ):
-            for output_channel in output_channels:
-                index = output_channel["channelIndex"]
-                channel_id = output_channel["channelId"]
-                channel_name = output_channel["channelName"]
-                channel_type = output_channel["channelType"]
-                from .channel import DigitalstromOutputChannel
+            if output_mode > 0 and (output_channels := data.get("outputChannels")):
+                for output_channel in output_channels:
+                    index = output_channel["channelIndex"]
+                    channel_id = output_channel["channelId"]
+                    channel_name = output_channel["channelName"]
+                    channel_type = output_channel["channelType"]
+                    from .channel import DigitalstromOutputChannel
 
-                self.output_channels[index] = DigitalstromOutputChannel(
-                    self, index, channel_id, channel_name, channel_type
-                )
+                    self.output_channels[index] = DigitalstromOutputChannel(
+                        self, index, channel_id, channel_name, channel_type
+                    )
