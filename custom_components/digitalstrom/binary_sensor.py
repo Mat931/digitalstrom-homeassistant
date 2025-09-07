@@ -194,7 +194,6 @@ class DigitalstromBinarySensor(BinarySensorEntity, DigitalstromEntity):
         self._state: int | None = None
         self.channel = binary_input_channel
         self.index = binary_input_channel.index
-        self.inverted = binary_input_channel.inverted
         self.set_type(binary_input_channel.input_type)
         self._attr_suggested_display_precision = 1
         self.entity_id = f"{DOMAIN}.{self.device.dsuid}_{self.index}"
@@ -234,7 +233,7 @@ class DigitalstromBinarySensor(BinarySensorEntity, DigitalstromEntity):
     def update_callback(self, state: bool, raw_state: int = None) -> None:
         if not self.enabled:
             return
-        self._state = state
+        self._state = state != self.channel.inverted
         self.async_write_ha_state()
 
     async def async_will_remove_from_hass(self) -> None:
@@ -244,4 +243,4 @@ class DigitalstromBinarySensor(BinarySensorEntity, DigitalstromEntity):
     @property
     def is_on(self) -> bool:
         """Return the state of the sensor."""
-        return (not bool(self._state)) if self.inverted else bool(self._state)
+        return self._state

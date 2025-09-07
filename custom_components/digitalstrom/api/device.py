@@ -172,13 +172,12 @@ class DigitalstromDevice:
 
     def _load_binary_inputs(self, data: dict) -> None:
         if binary_inputs := data.get("binaryInputs"):
-            inverted = False
-            # if (input_property := data.get("AKMInputProperty")) and (
-            #     input_property == "inverted"
-            # ):
-            #     inverted = True
-            if self.hw_info in INVERTED_BINARY_INPUTS:
+            inverted = data.get("AKMInputProperty") == "inverted"
+            invert_mode = INVERTED_BINARY_INPUTS.get(self.hw_info, "default")
+            if invert_mode == "always_invert":
                 inverted = True
+            elif invert_mode == "never_invert":
+                inverted = False
             for index in range(len(binary_inputs)):
                 input_dict = binary_inputs[index]
                 group = input_dict.get("targetGroup")
