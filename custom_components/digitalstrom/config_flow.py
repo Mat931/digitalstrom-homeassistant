@@ -211,7 +211,9 @@ class DigitalstromConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._dsuid = entry_data.get(CONF_DSUID, self._dsuid)
         return await self.async_step_user()
 
-    async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None):
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         """Add reconfigure step to allow to reconfigure a config entry."""
         self._existing_entry = self.hass.config_entries.async_get_entry(
             self.context["entry_id"]

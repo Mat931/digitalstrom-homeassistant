@@ -115,12 +115,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        if (
-            (entry.data[CONF_DSUID] in hass.data[DOMAIN])
-            and (
-                remove_watchdog := hass.data[DOMAIN][entry.data[CONF_DSUID]]["watchdog"]
-            )
-        ) is not None:
+        if entry.data[CONF_DSUID] in hass.data[DOMAIN] and (
+            (remove_watchdog := hass.data[DOMAIN][entry.data[CONF_DSUID]]["watchdog"])
+            is not None
+        ):
             remove_watchdog()
         await hass.data[DOMAIN][entry.data[CONF_DSUID]]["client"].stop_event_listener()
         hass.data[DOMAIN].pop(entry.data[CONF_DSUID])
