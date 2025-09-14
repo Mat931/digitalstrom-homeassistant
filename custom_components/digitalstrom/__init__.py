@@ -16,6 +16,7 @@ from homeassistant.const import (
 from homeassistant.core import CoreState, HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.event import async_track_time_interval
 
 from .api.apartment import DigitalstromApartment
@@ -123,3 +124,10 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await hass.data[DOMAIN][entry.data[CONF_DSUID]]["client"].stop_event_listener()
         hass.data[DOMAIN].pop(entry.data[CONF_DSUID])
     return unload_ok
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, config_entry: AugustConfigEntry, device_entry: dr.DeviceEntry
+) -> bool:
+    """Remove config entry from a device if it's no longer present."""
+    return True
