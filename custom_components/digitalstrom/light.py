@@ -90,21 +90,28 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
         self._attr_name = self.device.name
         self._attr_min_color_temp_kelvin = DEFAULT_MIN_KELVIN
         self._attr_max_color_temp_kelvin = DEFAULT_MAX_KELVIN
+        self.used_channels = ["brightness"]
 
         color_modes = []
         if self.dimmable:
             if self.x_channel is not None and self.y_channel is not None:
                 color_modes.append(ColorMode.XY)
+                self.used_channels.append("x")
+                self.used_channels.append("y")
             elif self.hue_channel is not None and self.saturation_channel is not None:
                 color_modes.append(ColorMode.HS)
+                self.used_channels.append("hue")
+                self.used_channels.append("saturation")
             if self.color_temp_channel is not None:
                 color_modes.append(ColorMode.COLOR_TEMP)
+                self.used_channels.append("colortemp")
             if len(color_modes) == 0:
                 color_modes.append(ColorMode.BRIGHTNESS)
         else:
             color_modes.append(ColorMode.ONOFF)
         self._attr_supported_color_modes = set(color_modes)
-        self._attr_color_mode = color_modes[0]
+        self.default_color_mode = color_modes[0]
+        self.last_color_mode = color_modes[0]
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
@@ -113,24 +120,30 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
         binary_light = True
 
         if (brightness := kwargs.get(ATTR_BRIGHTNESS)) is not None:
-            self.brightness_channel.prepare_value(brightness / 255 * 100)
+            self.brightness_channel.prepare_value(brightness / 2.55)
             binary_light = False
 
         if (color_temp_k := kwargs.get(ATTR_COLOR_TEMP_KELVIN)) is not None:
-            self.color_temp_channel.prepare_value(1000000.0 / color_temp_k)
+            self.color_temp_channel.prepare_value(1000000 / color_temp_k)
             binary_light = False
+            if ColorMode.COLOR_TEMP in self._attr_supported_color_modes:
+                self.last_color_mode = ColorMode.COLOR_TEMP
 
         if (xy_color := kwargs.get(ATTR_XY_COLOR)) is not None:
             color_x, color_y = xy_color
             self.x_channel.prepare_value(color_x)
             self.y_channel.prepare_value(color_y)
             binary_light = False
+            if ColorMode.XY in self._attr_supported_color_modes:
+                self.last_color_mode = ColorMode.XY
 
         if (hs_color := kwargs.get(ATTR_HS_COLOR)) is not None:
             hue, saturation = hs_color
             self.hue_channel.prepare_value(hue)
             self.saturation_channel.prepare_value(saturation)
             binary_light = False
+            if ColorMode.HS in self._attr_supported_color_modes:
+                self.last_color_mode = ColorMode.HS
 
         if binary_light:
             self.brightness_channel.prepare_value(100)
@@ -142,7 +155,7 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
         await self.brightness_channel.set_value(0)
 
     async def async_update(self, **kwargs: Any) -> None:
-        await self.brightness_channel.get_value()
+        await self.device.output_channels_get_values(self.used_channels)
 
     @property
     def is_on(self) -> bool:
@@ -157,3 +170,34 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
         if self.brightness_channel.last_value is None:
             return None
         return self.brightness_channel.last_value * 2.55
+
+    @property
+    def color_temp_kelvin(self) -> int:
+        """Return the CT color value in Kelvin."""
+        if self.color_temp_channel.last_value in [None, 0]:
+            return None
+        return round(1000000 / self.color_temp_channel.last_value)
+
+    @property
+    def hs_color(self) -> tuple[float, float] | None:
+        """Return the hs color."""
+        return (self.hue_channel.last_value, self.saturation_channel.last_value)
+
+    @property
+    def xy_color(self) -> tuple[float, float] | None:
+        """Return the xy color value [float, float]."""
+        x = self.x_channel.last_value
+        y = self.y_channel.last_value
+        if x is None or y is None:
+            return (None, None)
+        if x > 1 or y > 1:
+            x = x / 10000
+            y = y / 10000
+        return (x, y)
+
+    @property
+    def color_mode(self) -> str:
+        """Return the color mode of the light."""
+        if len(self._attr_supported_color_modes) > 1:
+            return self.last_color_mode
+        return self.default_color_mode

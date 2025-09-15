@@ -3,7 +3,11 @@ from typing import Self
 
 from .apartment import DigitalstromApartment
 from .client import DigitalstromClient
-from .const import INVERTED_BINARY_INPUTS, NOT_DIMMABLE_OUTPUT_MODES
+from .const import (
+    INVERTED_BINARY_INPUTS,
+    NOT_DIMMABLE_OUTPUT_MODES,
+    SUPPORTED_OUTPUT_CHANNELS,
+)
 from .exceptions import ServerError
 
 
@@ -35,6 +39,7 @@ class DigitalstromDevice:
         self.availability_callbacks = []
         self.reading_power_state_unsupported = False
         self.unique_device_names = []
+        self.output_channel_log_count = 0
 
     def get_parent(self) -> Self:
         if self.parent_device not in [None, self]:
@@ -73,17 +78,38 @@ class DigitalstromDevice:
             f"device/setOutputChannelValue?dsuid={self.dsuid}&channelvalues={channel_values_str}&applyNow=1"
         )
 
-    async def get_power_state(self) -> int:
-        if self.reading_power_state_unsupported:
-            return None
-        try:
-            result = await self.client.request(
-                f"property/getFloating?path=/apartment/zones/zone{self.zone_id}/devices/{self.dsuid}/status/outputs/powerState/targetValue"
+    async def output_channels_get_values(
+        self, channels: list[str] | None = None
+    ) -> None:
+        channel_values = []
+        if channels is None:
+            channels = [x.channel_type for x in self.output_channels.values()]
+        for output_channel in channels:
+            if output_channel in SUPPORTED_OUTPUT_CHANNELS:
+                channel_values.append(output_channel)
+        channel_values_str = ";".join(channel_values)
+        result_channel_values = {}
+
+        result = await self.client.request(
+            f"device/getOutputChannelValue?dsuid={self.dsuid}&channels={channel_values_str}"
+        )
+        if self.output_channel_log_count < 100:
+            self.output_channel_log_count += 1
+            self.apartment.logger.debug(
+                f"device/getOutputChannelValue?dsuid={self.dsuid}&channels={channel_values_str} {result}"
             )
-            return result.get("value", None)
-        except ServerError:
-            self.reading_power_state_unsupported = True
-        return None
+        if (result_channels := result.get("channels")) is not None:
+            for channel in result_channels:
+                channel_id = channel.get("channel")
+                channel_value = channel.get("value")
+                if channel_id is not None:
+                    result_channel_values[channel_id] = channel_value
+
+        for output_channel in self.output_channels.values():
+            if output_channel.channel_type in channels:
+                output_channel.last_value = result_channel_values.get(
+                    output_channel.channel_type, None
+                )
 
     async def call_scene(self, scene: int, force: bool = False) -> None:
         force_str = "&force=true" if force else ""
@@ -200,20 +226,16 @@ class DigitalstromDevice:
     def _load_outputs(self, data: dict) -> None:
         output_mode = data.get("outputMode")
         if output_mode is not None:
-            if output_mode == 0:
-                self.output_dimmable = None
-            elif output_mode in NOT_DIMMABLE_OUTPUT_MODES:
-                self.output_dimmable = False
-            else:
-                self.output_dimmable = True
+            self.output_dimmable = output_mode not in NOT_DIMMABLE_OUTPUT_MODES
             if output_mode > 0 and (output_channels := data.get("outputChannels")):
                 for output_channel in output_channels:
                     index = output_channel["channelIndex"]
-                    channel_id = output_channel["channelId"]
-                    channel_name = output_channel["channelName"]
-                    channel_type = output_channel["channelType"]
-                    from .channel import DigitalstromOutputChannel
+                    if index not in self.output_channels.keys():
+                        channel_id = output_channel["channelId"]
+                        channel_name = output_channel["channelName"]
+                        channel_type = output_channel["channelType"]
+                        from .channel import DigitalstromOutputChannel
 
-                    self.output_channels[index] = DigitalstromOutputChannel(
-                        self, index, channel_id, channel_name, channel_type
-                    )
+                        self.output_channels[index] = DigitalstromOutputChannel(
+                            self, index, channel_id, channel_name, channel_type
+                        )

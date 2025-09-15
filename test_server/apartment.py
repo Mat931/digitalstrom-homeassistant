@@ -18,6 +18,7 @@ class Apartment:
             "/usr/states/hail/state": "",
         }
         self.floats = {}
+        self.device_output_channels = {}
 
     def handle_request(self, request):
         match request.path:
@@ -47,6 +48,10 @@ class Apartment:
                 return self.firmware_check(request)
             case "/json/circuit/firmwareUpdate":
                 return self.firmware_update(request)
+            case "/json/device/getOutputChannelValue":
+                return self.get_output_channel_value(request)
+            case "/json/device/setOutputChannelValue":
+                return self.set_output_channel_value(request)
 
         return {"ok": True, "result": {}}
 
@@ -75,12 +80,6 @@ class Apartment:
     def undo_scene(self, request):
         scene_number = request.query.get("sceneNumber")
         return {"ok": True, "result": {}}
-
-    def get_reachable_groups(self, request):
-        pass
-
-    def get_temperature_control_status(self, request):
-        pass
 
     def get_circuits(self, request):
         data = self.read_json_file("getCircuits")
@@ -142,6 +141,27 @@ class Apartment:
 
     def get_energy_meter_value(self, request):
         return {"ok": True, "result": {"meterValue": 3600000}}
+
+    def get_output_channel_value(self, request):
+        dsuid = request.query.get("dsuid")
+        channels = request.query.get("channels").split(";")
+        result_channels = []
+        if (cv := self.device_output_channels.get(dsuid)) is not None:
+            for channel in channels:
+                value = cv.get(channel)
+                result_channels.append({"channel": channel, "value": value})
+        return {"ok": True, "result": {"channels": result_channels}}
+
+    def set_output_channel_value(self, request):
+        dsuid = request.query.get("dsuid")
+        channelvalues = request.query.get("channelvalues").split(";")
+        if dsuid not in self.device_output_channels:
+            self.device_output_channels[dsuid] = {}
+        for cv in channelvalues:
+            channel, value = cv.split("=")
+            value = float(value)
+            self.device_output_channels[dsuid][channel] = value
+        return {"ok": True, "result": {}}
 
     def read_json_file(self, filename):
         file_path = f"json/{filename}.json"

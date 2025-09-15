@@ -221,7 +221,7 @@ class DigitalstromApartment:
                     device := self.devices.get(dsuid)
                 ):
                     for channel in device.output_channels.values():
-                        channel.update("timeout")
+                        channel.update(None)
             elif name == "apartmentProxyStateChanged":
                 # TODO: Update all output channels
                 pass

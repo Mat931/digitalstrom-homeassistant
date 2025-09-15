@@ -85,9 +85,11 @@ class DigitalstromCover(CoverEntity, DigitalstromEntity):
         self.last_tilt = None
         self.entity_id = f"{DOMAIN}.{self.device.dsuid}_{position_channel.index}"
         self._attr_name = self.device.name
+        self.used_channels = [self.position_channel.channel_type]
         if position_channel.channel_type == "shadePositionIndoor":
             self._attr_name += " Indoor Cover"
         if self.tilt_channel is not None:
+            self.used_channels.append(self.tilt_channel.channel_type)
             self._attr_supported_features |= (
                 CoverEntityFeature.OPEN_TILT
                 | CoverEntityFeature.CLOSE_TILT
@@ -101,11 +103,9 @@ class DigitalstromCover(CoverEntity, DigitalstromEntity):
         )
 
     def update_callback(self, state, raw_state=None) -> None:
-        pass
-
-    async def async_will_remove_from_hass(self) -> None:
-        # self.device.client.unregister_event_callback(self.event_callback)
-        pass
+        if not self.enabled:
+            return
+        self.async_write_ha_state()
 
     async def async_open_cover(self, **kwargs: Any) -> None:
         """Open cover."""
@@ -144,9 +144,7 @@ class DigitalstromCover(CoverEntity, DigitalstromEntity):
             await self.tilt_channel.set_value(kwargs[ATTR_TILT_POSITION])
 
     async def async_update(self, **kwargs: Any) -> None:
-        await self.position_channel.get_value()
-        if self.tilt_channel is not None:
-            await self.tilt_channel.get_value()
+        await self.device.output_channels_get_values(self.used_channels)
 
     @property
     def current_cover_position(self) -> int | None:
@@ -194,5 +192,5 @@ class DigitalstromCover(CoverEntity, DigitalstromEntity):
         return (
             None
             if self.tilt_channel is None
-            else self._fully_open_tilt - self._fully_closed_tilt
+            else self._fully_open_tilt() - self._fully_closed_tilt()
         )

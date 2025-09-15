@@ -7,4 +7,17 @@ INVERTED_BINARY_INPUTS = {
     "IC Alarm 400 Modul": "always_invert",
     "IC PIR Sensor": "never_invert",
 }
-NOT_DIMMABLE_OUTPUT_MODES = [16, 35, 39, 40, 41]
+NOT_DIMMABLE_OUTPUT_MODES = [0, 16, 35, 39, 40, 41]
+SUPPORTED_OUTPUT_CHANNELS = [
+    "brightness",
+    "hue",
+    "saturation",
+    "colortemp",
+    "x",
+    "y",
+    "shadePositionOutside",
+    "shadePositionIndoor",
+    "shadeOpeningAngleOutside",
+    "shadeOpeningAngleIndoor",
+    "powerLevel",
+]
