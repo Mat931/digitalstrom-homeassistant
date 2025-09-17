@@ -48,6 +48,7 @@ class DigitalstromSwitch(SwitchEntity, DigitalstromEntity):
         self.device = channel.device
         self.client = self.device.client
         self._attr_should_poll = True
+        self.last_power_state = None
         self._attr_has_entity_name = False
         self.entity_id = f"{DOMAIN}.{self.device.dsuid}_{channel.index}"
         self._attr_name = self.device.name
@@ -55,9 +56,9 @@ class DigitalstromSwitch(SwitchEntity, DigitalstromEntity):
     @property
     def is_on(self) -> bool | None:
         """Return true if the switch is on."""
-        if self.channel.last_value is None:
+        if self.last_power_state is None:
             return None
-        return self.channel.last_value > 0
+        return self.last_power_state > 0
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
@@ -68,7 +69,7 @@ class DigitalstromSwitch(SwitchEntity, DigitalstromEntity):
         await self.channel.set_value(0)
 
     async def async_update(self, **kwargs: Any) -> None:
-        await self.device.output_channels_get_values(["powerLevel"])
+        self.last_power_state = await self.device.get_power_state()
 
 
 class DigitalstromApartmentSceneSwitch(SwitchEntity):

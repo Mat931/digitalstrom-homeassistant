@@ -155,7 +155,7 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
         await self.brightness_channel.set_value(0)
 
     async def async_update(self, **kwargs: Any) -> None:
-        await self.device.output_channels_get_values(self.used_channels)
+        await self.brightness_channel.get_value()
 
     @property
     def is_on(self) -> bool:
@@ -170,30 +170,6 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
         if self.brightness_channel.last_value is None:
             return None
         return self.brightness_channel.last_value * 2.55
-
-    @property
-    def color_temp_kelvin(self) -> int:
-        """Return the CT color value in Kelvin."""
-        if self.color_temp_channel.last_value in [None, 0]:
-            return None
-        return round(1000000 / self.color_temp_channel.last_value)
-
-    @property
-    def hs_color(self) -> tuple[float, float] | None:
-        """Return the hs color."""
-        return (self.hue_channel.last_value, self.saturation_channel.last_value)
-
-    @property
-    def xy_color(self) -> tuple[float, float] | None:
-        """Return the xy color value [float, float]."""
-        x = self.x_channel.last_value
-        y = self.y_channel.last_value
-        if x is None or y is None:
-            return (None, None)
-        if x > 1 or y > 1:
-            x = x / 10000
-            y = y / 10000
-        return (x, y)
 
     @property
     def color_mode(self) -> str:
