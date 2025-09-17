@@ -43,7 +43,9 @@ class DigitalstromUpdateEntity(UpdateEntity):
         self._attr_name = "Firmware"
         self._attr_has_entity_name = True
         self._attr_device_class = UpdateDeviceClass.FIRMWARE
-        self._attr_supported_features = UpdateEntityFeature.INSTALL
+        self._attr_supported_features = (
+            UpdateEntityFeature.INSTALL | UpdateEntityFeature.RELEASE_NOTES
+        )
         self._attr_in_progress = False
         self._attr_should_poll = True
         self._attr_installed_version = self.circuit.sw_version
@@ -90,3 +92,7 @@ class DigitalstromUpdateEntity(UpdateEntity):
         self._attr_latest_version = (
             "Needs Update" if status == "update" else self.circuit.sw_version
         )
+
+    async def async_release_notes(self) -> str | None:
+        """Return the release notes."""
+        return f'This will attempt to install an update on the device "{self.circuit.name}".\n\nWarning: Updating devices through Home Assistant is experimental and wasn\'t tested on a real system. If there are any problems with the update process, please open an issue on [GitHub](https://github.com/Mat931/digitalstrom-homeassistant/issues).'
