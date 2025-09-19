@@ -1,3 +1,4 @@
+import ast
 import asyncio
 import json
 import secrets
@@ -47,6 +48,7 @@ async def auth_middleware(request, handler):
         "/json/system/login",
         "/json/system/enableToken",
         "/json/system/loginApplication",
+        "/send_event",
     ]
     if request.path in UNAUTHENTICATED_PATHS:
         return await handler(request)
@@ -144,6 +146,49 @@ async def websocket_handler(request):
     return ws
 
 
+async def send_event(request):
+    # This is not part of the DSS API. You can use it to send websocket events to all connected clients.
+    failed = False
+    event = {}
+    try:
+        event_str = request.query.get("event")
+        try:
+            event = json.loads(event_str)
+        except json.decoder.JSONDecodeError:
+            try:
+                event = ast.literal_eval(event_str)
+            except SyntaxError:
+                failed = True
+        print(f"Event: {event_str}")
+    except TypeError:
+        failed = True
+    if failed:
+        return web.json_response(
+            {
+                "error": 'Invalid data. Use send_event?event={"name": "", "properties": "", "source": ""}'
+            },
+            status=400,
+        )
+
+    if "name" not in event:
+        return web.json_response({"error": 'event does not contain "name"'}, status=400)
+    if "properties" not in event:
+        return web.json_response(
+            {"error": 'event does not contain "properties"'}, status=400
+        )
+    if "source" not in event:
+        return web.json_response(
+            {"error": 'event does not contain "source"'}, status=400
+        )
+
+    if connected_ws:
+        msg_text = json.dumps(event)
+        coros = [ws.send_str(msg_text) for ws in connected_ws if not ws.closed]
+        await asyncio.gather(*coros, return_exceptions=True)
+
+    return web.json_response({"sent": True, "connected_clients": len(connected_ws)})
+
+
 async def init_app():
     app = web.Application(middlewares=[auth_middleware])
     app.router.add_get("/json/system/getDSID", get_dsid)
@@ -155,6 +200,7 @@ async def init_app():
     app.router.add_get("/json/system/loginApplication", login_application)
     app.router.add_get(r"/json/{path:.*}", json_api)
     app.router.add_get("/websocket", websocket_handler)
+    app.router.add_get("/send_event", send_event)
     return app
 
 

@@ -53,13 +53,27 @@ class DigitalstromDevice:
             return self.parent_device.get_parent()
         return self
 
-    def availability_callback(self, available: bool, call_parent: bool = False) -> None:
+    def update_availability(self, available: bool) -> None:
+        parent = self.get_parent()
+        if parent != self:
+            parent.update_availability(available)
+            return
         if not self.available == available:
             self.available = available
-            if call_parent and (self.parent_device is not None):
-                self.parent_device.availability_callback(available)
             for callback in self.availability_callbacks:
                 callback(available)
+
+    def register_availability_callback(
+        self, callback: Callable[[bool], None]
+    ) -> Callable[[], None]:
+        if callback not in self.availability_callbacks:
+            self.availability_callbacks.append(callback)
+
+        def unregister_availability_callback() -> None:
+            if callback in self.availability_callbacks:
+                self.availability_callbacks.remove(callback)
+
+        return unregister_availability_callback
 
     def load_from_dict(self, data: dict) -> None:
         if (dsuid := data.get("dSUID")) and (dsuid == self.dsuid):

@@ -98,6 +98,7 @@ class DigitalstromCover(CoverEntity, DigitalstromEntity):
             )
 
     async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
         self.async_on_remove(
             self.position_channel.register_update_callback(self.update_callback)
         )
@@ -146,6 +147,7 @@ class DigitalstromCover(CoverEntity, DigitalstromEntity):
             await self.tilt_channel.set_value(kwargs[ATTR_TILT_POSITION])
 
     async def async_update(self, **kwargs: Any) -> None:
+        # await self.device.output_channels_get_values(self.used_channels)
         await self.position_channel.get_value()
         if self.tilt_channel is not None:
             await self.tilt_channel.get_value()

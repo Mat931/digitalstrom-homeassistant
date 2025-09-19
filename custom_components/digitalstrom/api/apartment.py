@@ -79,6 +79,10 @@ class DigitalstromApartment:
                 if curr.name not in parent_device.unique_device_names:
                     parent_device.unique_device_names.append(curr.name)
                 self.logger.debug(f"Merging devices {parent_device.dsuid} {curr.dsuid}")
+                if parent_device.available != curr.available:
+                    self.logger.debug(
+                        f"Merged devices have different availability: {parent_device.available} {curr.available}"
+                    )
 
     async def get_devices(self) -> dict:
         data = await self.client.request("apartment/getDevices")
@@ -141,46 +145,41 @@ class DigitalstromApartment:
             if name == "deviceSensorValue":
                 dsuid = data["source"]["dsid"]
                 index = int(data["properties"]["sensorIndex"])
-                # sensor_type = int(data["properties"]["sensorType"])
-                # raw_value = int(data["properties"]["sensorValue"])  # "sensorValue" is not always present
                 value = float(data["properties"]["sensorValueFloat"])
                 if (device := self.devices.get(dsuid)) and (
                     sensor := device.sensors.get(index)
                 ):
                     sensor.update(value)
+                    device.update_availability(True)
+
             elif name == "deviceBinaryInputEvent":
                 dsuid = data["source"]["dsid"]
                 index = int(data["properties"]["inputIndex"])
                 raw_state = int(data["properties"]["inputState"])
                 state = raw_state > 0
-                # input_type = int(data["properties"]["inputType"])
-                # print(f"Binary input event: {dsuid}.{index} {state}, Raw: {raw_state}")
                 if (device := self.devices.get(dsuid)) and (
                     binary_sensor := device.binary_inputs.get(index)
                 ):
                     binary_sensor.update(state, raw_state)
+                    device.update_availability(True)
+
             elif name == "stateChange":
                 state = data["properties"]["state"]
                 if (dsuid := data["source"].get("dSUID")) and (
                     device := self.devices.get(dsuid)
                 ):
                     if state == "unknown":
-                        device.availability_callback(False, call_parent=True)
+                        device.update_availability(False)
                     else:
-                        device.availability_callback(True)
-                # raw_value = data["properties"]["value"]
-                # statename = data["properties"]["statename"]
+                        device.update_availability(True)
 
-                # if binary_input := self.devices.get(dsuid).binary_inputs.get(index):
-                #    value = int(raw_value) == 1
-                #    binary_input.update(value, raw_value)
             elif name == "DeviceEvent":
                 if (
                     (data["properties"]["action"] == "ready")
                     and (dsuid := data["source"].get("dsid"))
                     and (device := self.devices.get(dsuid))
                 ):
-                    device.availability_callback(True)
+                    device.update_availability(True)
 
             elif name in ["callScene", "callSceneBus"]:
                 dsuid = data["properties"].get(
@@ -200,6 +199,7 @@ class DigitalstromApartment:
                         extra_data = {}
                         extra_data["scene_id"] = scene_id
                         device.button.update("call_device_scene", extra_data)
+                        device.update_availability(True)
                     if (
                         (data["source"]["isGroup"])
                         and (group_id := data["source"].get("groupID"))
@@ -210,6 +210,8 @@ class DigitalstromApartment:
                         extra_data["group_id"] = group_id
                         extra_data["zone_id"] = zone_id
                         device.button.update("call_group_scene", extra_data)
+                        device.update_availability(True)
+
             elif name == "buttonClick":
                 dsuid = data["source"]["dsid"]
                 button_index = int(data["properties"]["buttonIndex"])
@@ -224,12 +226,13 @@ class DigitalstromApartment:
                         data["properties"].get("holdCount", 0)
                     )
                     device.button.update("button", extra_data)
-            elif name == "apartmentProxyDeviceTimeout":
-                if (dsuid := data["source"].get("dsid")) and (
-                    device := self.devices.get(dsuid)
-                ):
-                    for channel in device.output_channels.values():
-                        channel.update(None)
-            elif name == "apartmentProxyStateChanged":
-                # TODO: Update all output channels
-                pass
+                    device.update_availability(True)
+
+            # elif name == "apartmentProxyDeviceTimeout": # Cover reached end position
+            #     if (dsuid := data["source"].get("dsid")) and (
+            #         device := self.devices.get(dsuid)
+            #     ):
+            #         await device.output_channels_get_values() # TODO
+            # elif name == "apartmentProxyStateChanged":
+            #     # TODO: Update all output channels
+            #     pass

@@ -364,6 +364,7 @@ class DigitalstromSensor(SensorEntity, DigitalstromEntity):
         self._attr_state_class = self.entity_description.state_class
 
     async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
         self.update_callback(self.channel.last_value)
         self.async_on_remove(
             self.channel.register_update_callback(self.update_callback)
