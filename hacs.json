@@ -1,6 +1,6 @@
 {
     "name": "digitalSTROM",
     "render_readme": true,
-    "zip_release": true,
+    "zip_release": false,
     "filename": "digitalstrom.zip"
 }
