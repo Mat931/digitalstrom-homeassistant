@@ -21,8 +21,8 @@ DS_USER_TOKEN = "test_user_token"
 DS_SYSTEM_DSUID = "TEST_SYSTEM_DSUID"
 ENABLE_AUTH_CHECKS = False
 
-APP_TOKENS = {}
-SESSION_TOKENS = {}
+APP_TOKENS: dict[str, dict[str, str | bool]] = {}
+SESSION_TOKENS: dict[str, dict[str, str | float]] = {}
 connected_ws = set()
 ap = apartment.Apartment()
 

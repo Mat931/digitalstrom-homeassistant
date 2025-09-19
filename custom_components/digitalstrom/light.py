@@ -67,11 +67,11 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
     def __init__(
         self,
         brightness_channel: DigitalstromOutputChannel,
-        color_temp_channel: DigitalstromOutputChannel = None,
-        hue_channel: DigitalstromOutputChannel = None,
-        saturation_channel: DigitalstromOutputChannel = None,
-        x_channel: DigitalstromOutputChannel = None,
-        y_channel: DigitalstromOutputChannel = None,
+        color_temp_channel: DigitalstromOutputChannel | None = None,
+        hue_channel: DigitalstromOutputChannel | None = None,
+        saturation_channel: DigitalstromOutputChannel | None = None,
+        x_channel: DigitalstromOutputChannel | None = None,
+        y_channel: DigitalstromOutputChannel | None = None,
     ):
         super().__init__(brightness_channel.device, f"O{brightness_channel.index}")
 
@@ -92,7 +92,7 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
         self._attr_max_color_temp_kelvin = DEFAULT_MAX_KELVIN
         self.used_channels = ["brightness"]
 
-        color_modes = []
+        color_modes: list[ColorMode] = []
         if self.dimmable:
             if self.x_channel is not None and self.y_channel is not None:
                 color_modes.append(ColorMode.XY)
@@ -109,7 +109,7 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
                 color_modes.append(ColorMode.BRIGHTNESS)
         else:
             color_modes.append(ColorMode.ONOFF)
-        self._attr_supported_color_modes = set(color_modes)
+        self._attr_supported_color_modes: set[ColorMode] = set(color_modes)
         self.default_color_mode = color_modes[0]
         self.last_color_mode = color_modes[0]
 
@@ -123,13 +123,19 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
             self.brightness_channel.prepare_value(brightness / 2.55)
             binary_light = False
 
-        if (color_temp_k := kwargs.get(ATTR_COLOR_TEMP_KELVIN)) is not None:
+        if (
+            color_temp_k := kwargs.get(ATTR_COLOR_TEMP_KELVIN)
+        ) is not None and self.color_temp_channel is not None:
             self.color_temp_channel.prepare_value(1000000 / color_temp_k)
             binary_light = False
             if ColorMode.COLOR_TEMP in self._attr_supported_color_modes:
                 self.last_color_mode = ColorMode.COLOR_TEMP
 
-        if (xy_color := kwargs.get(ATTR_XY_COLOR)) is not None:
+        if (
+            (xy_color := kwargs.get(ATTR_XY_COLOR)) is not None
+            and self.x_channel is not None
+            and self.y_channel is not None
+        ):
             color_x, color_y = xy_color
             self.x_channel.prepare_value(color_x)
             self.y_channel.prepare_value(color_y)
@@ -137,7 +143,11 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
             if ColorMode.XY in self._attr_supported_color_modes:
                 self.last_color_mode = ColorMode.XY
 
-        if (hs_color := kwargs.get(ATTR_HS_COLOR)) is not None:
+        if (
+            (hs_color := kwargs.get(ATTR_HS_COLOR)) is not None
+            and self.hue_channel is not None
+            and self.saturation_channel is not None
+        ):
             hue, saturation = hs_color
             self.hue_channel.prepare_value(hue)
             self.saturation_channel.prepare_value(saturation)
@@ -158,18 +168,18 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
         await self.brightness_channel.get_value()
 
     @property
-    def is_on(self) -> bool:
+    def is_on(self) -> bool | None:
         """Return true if the light is on."""
         if self.brightness_channel.last_value is None:
             return None
         return self.brightness_channel.last_value > 0
 
     @property
-    def brightness(self) -> int:
+    def brightness(self) -> int | None:
         """Return the brightness of a device."""
         if self.brightness_channel.last_value is None:
             return None
-        return self.brightness_channel.last_value * 2.55
+        return round(self.brightness_channel.last_value * 2.55)
 
     @property
     def color_mode(self) -> str:

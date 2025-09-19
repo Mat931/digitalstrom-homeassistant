@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
@@ -191,7 +192,7 @@ class DigitalstromBinarySensor(BinarySensorEntity, DigitalstromEntity):
     def __init__(self, binary_input_channel: DigitalstromBinaryInputChannel):
         super().__init__(binary_input_channel.device, f"S{binary_input_channel.index}")
         self._attributes: dict[str, Any] = {}
-        self._state: int | None = None
+        self._state: bool | None = None
         self.channel = binary_input_channel
         self.index = binary_input_channel.index
         self.set_type(binary_input_channel.input_type)
@@ -230,9 +231,11 @@ class DigitalstromBinarySensor(BinarySensorEntity, DigitalstromEntity):
             self.channel.register_update_callback(self.update_callback)
         )
 
-    def update_callback(self, state: bool, raw_state: int = None) -> None:
+    def update_callback(self, state: bool | None, raw_state: int | None = None) -> None:
         if not self.enabled:
             return
+        if state is None:
+            self._state = None
         self._state = state != self.channel.inverted
         self.async_write_ha_state()
 
@@ -241,6 +244,6 @@ class DigitalstromBinarySensor(BinarySensorEntity, DigitalstromEntity):
         pass
 
     @property
-    def is_on(self) -> bool:
+    def is_on(self) -> bool | None:
         """Return the state of the sensor."""
         return self._state

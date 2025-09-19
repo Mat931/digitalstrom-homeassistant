@@ -18,7 +18,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, PRECISION_TENTHS, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
@@ -39,7 +39,7 @@ PRESET_HOLIDAY = "holiday"
 PRESET_PASSIVE_COOLING = "passive_cooling"
 PRESET_PASSIVE_COOLING_OFF = "passive_cooling_off"
 
-ID_TO_PRESET: dict[int, str] = {
+ID_TO_PRESET: dict[int | None, str] = {
     0: PRESET_OFF,
     1: PRESET_COMFORT,
     2: PRESET_ECO,
@@ -103,7 +103,7 @@ class DigitalstromClimateCoordinator(DataUpdateCoordinator):
         )
         self.apartment = apartment
 
-    async def _async_update_data(self):
+    async def _async_update_data(self) -> None:
         try:
             async with async_timeout.timeout(10):
                 await self.apartment.get_zone_climate_data()
@@ -140,16 +140,16 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
             PRESET_PASSIVE_COOLING,
         ]
         self._enable_turn_on_off_backwards_compatibility = False
-        self._target_climate_operation_mode = None
+        self._target_climate_operation_mode: int | None = None
 
     @property
     def hvac_mode(self) -> HVACMode | None:
         """Return current operation ie. heat, cool, idle."""
         if self.zone.climate_operation_mode in [0, 7, 9]:
             return HVACMode.OFF
-        if self.zone.climate_operation_mode <= 5:
+        if self.zone.climate_operation_mode in [1, 2, 3, 4, 5]:
             return HVACMode.HEAT
-        if self.zone.climate_operation_mode <= 14:
+        if self.zone.climate_operation_mode in [6, 8, 10, 11, 12, 13, 14]:
             return HVACMode.COOL
         return None
 
@@ -158,7 +158,7 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
         """Return the current running hvac operation."""
         if self.zone.control_value == 0:
             return HVACAction.IDLE
-        if self.zone.climate_operation_mode <= 5:
+        if self.zone.climate_operation_mode in [1, 2, 3, 4, 5]:
             return HVACAction.HEATING
         return HVACAction.COOLING
 
@@ -178,8 +178,8 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
         return self.zone.target_temperature
 
     def _get_new_climate_operation_mode(
-        self, old_climate_operation_mode: int, hvac_mode: HVACMode
-    ) -> int:
+        self, old_climate_operation_mode: int | None, hvac_mode: HVACMode
+    ) -> int | None:
         """Calculate new climate operation mode using hvac_mode."""
         if hvac_mode == HVACMode.OFF:
             if old_climate_operation_mode in [6, 7]:
@@ -199,10 +199,12 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
         return old_climate_operation_mode
 
     async def _async_set_climate_operation_mode(
-        self, climate_operation_mode: int
+        self, climate_operation_mode: int | None
     ) -> None:
         """Set climate operation mode."""
         self._target_climate_operation_mode = climate_operation_mode
+        if climate_operation_mode is None:
+            return
         await self.zone.call_scene(climate_operation_mode, 48)
         await self.coordinator.async_request_refresh()
 
@@ -244,6 +246,8 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
         )
         if preset_mode not in PRESET_TO_SCENE:
             return
+        if self.zone.climate_operation_mode is None:
+            return
         scene_id = PRESET_TO_SCENE[preset_mode]
         if self.zone.climate_operation_mode >= 9 and scene_id <= 5:
             scene_id += 9
@@ -274,7 +278,7 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
         self.async_write_ha_state()
 
     @property
-    def device_info(self) -> dict:
+    def device_info(self) -> DeviceInfo:
         return DeviceInfo(
             identifiers={
                 (

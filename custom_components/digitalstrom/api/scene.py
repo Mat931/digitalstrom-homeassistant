@@ -4,7 +4,7 @@ from .zone import DigitalstromZone
 
 
 class DigitalstromScene:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     async def call(self) -> None:
@@ -20,9 +20,9 @@ class DigitalstromApartmentScene(DigitalstromScene):
         apartment: DigitalstromApartment,
         name: str,
         call_number: int,
-        undo_number: int = None,
-        state_name: str = None,
-        on_state: str = None,
+        undo_number: int | None = None,
+        state_name: str | None = None,
+        on_state: str | None = None,
     ):
         self.apartment = apartment
         self.name = name
@@ -41,7 +41,7 @@ class DigitalstromApartmentScene(DigitalstromScene):
         else:
             await self.apartment.call_scene(self.undo_number, force)
 
-    async def get_value(self) -> bool:
+    async def get_value(self) -> bool | None:
         if self.state_name is None or self.on_state is None:
             return None
         try:
@@ -62,7 +62,7 @@ class DigitalstromZoneScene(DigitalstromScene):
         zone: DigitalstromZone,
         number: int,
         group: int,
-        name: str = None,
+        name: str | None = None,
     ):
         self.zone = zone
         self.name = name

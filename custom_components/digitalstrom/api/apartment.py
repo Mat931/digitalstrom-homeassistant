@@ -28,11 +28,15 @@ APARTMENT_SCENES: list = [
 
 class DigitalstromApartment:
     def __init__(self, client: DigitalstromClient, system_dsuid: str):
+        from .circuit import DigitalstromCircuit
+        from .device import DigitalstromDevice
+        from .zone import DigitalstromZone
+
         self.client = client
         self.dsuid = system_dsuid
-        self.devices = {}
-        self.circuits = {}
-        self.zones = {}
+        self.devices: dict[str, DigitalstromDevice] = {}
+        self.circuits: dict[str, DigitalstromCircuit] = {}
+        self.zones: dict[int, DigitalstromZone] = {}
         self.scenes = []
         self.logger = logging.getLogger("digitalstrom_api")
         client.register_event_callback(self.event_callback)
@@ -140,7 +144,9 @@ class DigitalstromApartment:
                 # sensor_type = int(data["properties"]["sensorType"])
                 # raw_value = int(data["properties"]["sensorValue"])  # "sensorValue" is not always present
                 value = float(data["properties"]["sensorValueFloat"])
-                if sensor := self.devices.get(dsuid).sensors.get(index):
+                if (device := self.devices.get(dsuid)) and (
+                    sensor := device.sensors.get(index)
+                ):
                     sensor.update(value)
             elif name == "deviceBinaryInputEvent":
                 dsuid = data["source"]["dsid"]
@@ -149,7 +155,9 @@ class DigitalstromApartment:
                 state = raw_state > 0
                 # input_type = int(data["properties"]["inputType"])
                 # print(f"Binary input event: {dsuid}.{index} {state}, Raw: {raw_state}")
-                if binary_sensor := self.devices.get(dsuid).binary_inputs.get(index):
+                if (device := self.devices.get(dsuid)) and (
+                    binary_sensor := device.binary_inputs.get(index)
+                ):
                     binary_sensor.update(state, raw_state)
             elif name == "stateChange":
                 state = data["properties"]["state"]

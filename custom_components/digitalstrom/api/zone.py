@@ -6,21 +6,23 @@ class DigitalstromZone:
     def __init__(
         self, client: DigitalstromClient, apartment: DigitalstromApartment, zone_id: int
     ):
+        from .scene import DigitalstromZoneScene
+
         self.client = client
         self.zone_id = zone_id
         self.apartment = apartment
         self.name = ""
-        self.group_ids = []
-        self.scenes = {}
-        self.climate_control_mode = None
-        self.climate_control_state = None
-        self.climate_operation_mode = None
-        self.current_temperature = None
-        self.target_temperature = None
-        self.control_value = None
+        self.group_ids: list[int] = []
+        self.scenes: dict[str, DigitalstromZoneScene] = {}
+        self.climate_control_mode: int | None = None
+        self.climate_control_state: int | None = None
+        self.climate_operation_mode: int | None = None
+        self.current_temperature: float | None = None
+        self.target_temperature: float | None = None
+        self.control_value: float | None = None
 
     async def call_scene(
-        self, scene: int, group_id: int = None, force: bool = False
+        self, scene: int, group_id: int | None = None, force: bool = False
     ) -> None:
         group_str = "" if group_id is None else f"&groupID={group_id}"
         force_str = "&force=true" if force else ""
@@ -28,14 +30,14 @@ class DigitalstromZone:
             f"zone/callScene?id={self.zone_id}&sceneNumber={scene}{group_str}{force_str}"
         )
 
-    async def undo_scene(self, scene: int, group_id: int = None) -> None:
+    async def undo_scene(self, scene: int, group_id: int | None = None) -> None:
         group_str = "" if group_id is None else f"&groupID={group_id}"
         await self.client.request(
             f"zone/undoScene?id={self.zone_id}&sceneNumber={scene}{group_str}"
         )
 
     async def set_target_temperature(
-        self, target_temperature: float, operation_mode: int = None
+        self, target_temperature: float, operation_mode: int | None = None
     ) -> None:
         if operation_mode is None:
             operation_mode = self.climate_operation_mode

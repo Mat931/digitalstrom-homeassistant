@@ -1,4 +1,5 @@
 import re
+from collections.abc import Callable
 from typing import Self
 
 from .apartment import DigitalstromApartment
@@ -15,6 +16,13 @@ class DigitalstromDevice:
     def __init__(
         self, client: DigitalstromClient, apartment: DigitalstromApartment, dsuid: str
     ):
+        from .channel import (
+            DigitalstromBinaryInputChannel,
+            DigitalstromButtonChannel,
+            DigitalstromOutputChannel,
+            DigitalstromSensorChannel,
+        )
+
         self.client = client
         self.apartment = apartment
         self.dsuid = dsuid
@@ -23,33 +31,33 @@ class DigitalstromDevice:
         self.hw_info = ""
         self.oem_product_url = None
         self.manufacturer = "digitalSTROM"
-        self.zone_id = None
-        self.button_used = None
+        self.zone_id: int | None = None
+        self.button_used: bool | None = None
         self.button_group = 0
-        self.output_dimmable = None
-        self.sensors = {}
-        self.binary_inputs = {}
-        self.output_channels = {}
-        self.button = None
-        self.meter_dsuid = None
+        self.output_dimmable: bool | None = None
+        self.sensors: dict[int, DigitalstromSensorChannel] = {}
+        self.binary_inputs: dict[int, DigitalstromBinaryInputChannel] = {}
+        self.output_channels: dict[int, DigitalstromOutputChannel] = {}
+        self.button: DigitalstromButtonChannel | None = None
+        self.meter_dsuid: str | None = None
         self.dsuid_index = None
         self.oem_part_number = None
-        self.parent_device = None
+        self.parent_device: Self | None = None
         self.available = False
-        self.availability_callbacks = []
+        self.availability_callbacks: list[Callable] = []
         self.reading_power_state_unsupported = False
-        self.unique_device_names = []
+        self.unique_device_names: list[str] = []
 
     def get_parent(self) -> Self:
-        if self.parent_device not in [None, self]:
+        if self.parent_device is not None and self.parent_device != self:
             return self.parent_device.get_parent()
         return self
 
     def availability_callback(self, available: bool, call_parent: bool = False) -> None:
         if not self.available == available:
             self.available = available
-            if call_parent and (parent_device is not None):
-                parent_device.availability_callback(available)
+            if call_parent and (self.parent_device is not None):
+                self.parent_device.availability_callback(available)
             for callback in self.availability_callbacks:
                 callback(available)
 
@@ -83,9 +91,9 @@ class DigitalstromDevice:
         channel_values = []
         if channels is None:
             channels = [x.channel_type for x in self.output_channels.values()]
-        for output_channel in channels:
-            if output_channel in SUPPORTED_OUTPUT_CHANNELS:
-                channel_values.append(output_channel)
+        for output_channel_type in channels:
+            if output_channel_type in SUPPORTED_OUTPUT_CHANNELS:
+                channel_values.append(output_channel_type)
         channel_values_str = ";".join(channel_values)
         result_channel_values = {}
 
@@ -106,7 +114,7 @@ class DigitalstromDevice:
                     output_channel.channel_type, None
                 )
 
-    async def get_power_state(self) -> int:
+    async def get_power_state(self) -> float | None:
         if self.reading_power_state_unsupported:
             return None
         try:

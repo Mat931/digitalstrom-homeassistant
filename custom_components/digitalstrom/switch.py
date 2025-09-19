@@ -4,7 +4,7 @@ from typing import Any
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .api.channel import DigitalstromOutputChannel
@@ -48,7 +48,7 @@ class DigitalstromSwitch(SwitchEntity, DigitalstromEntity):
         self.device = channel.device
         self.client = self.device.client
         self._attr_should_poll = True
-        self.last_power_state = None
+        self.last_power_state: float | None = None
         self._attr_has_entity_name = False
         self.entity_id = f"{DOMAIN}.{self.device.dsuid}_{channel.index}"
         self._attr_name = self.device.name
@@ -102,7 +102,7 @@ class DigitalstromApartmentSceneSwitch(SwitchEntity):
         await self.scene.get_value()
 
     @property
-    def device_info(self) -> dict:
+    def device_info(self) -> DeviceInfo:
         return DeviceInfo(
             identifiers={(DOMAIN, self.scene.apartment.dsuid)},
             name="Apartment",

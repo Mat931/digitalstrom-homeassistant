@@ -139,7 +139,7 @@ class DigitalstromZoneSceneEntity(SceneEntity):
         await self.scene.call()
 
     @property
-    def device_info(self) -> dict:
+    def device_info(self) -> DeviceInfo:
         return DeviceInfo(
             identifiers={
                 (

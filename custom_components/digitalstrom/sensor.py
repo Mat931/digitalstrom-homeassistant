@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -28,7 +29,7 @@ from homeassistant.const import (
     UnitOfVolumetricFlux,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .api.channel import DigitalstromMeterSensorChannel, DigitalstromSensorChannel
@@ -341,7 +342,7 @@ class DigitalstromSensor(SensorEntity, DigitalstromEntity):
     def __init__(self, sensor_channel: DigitalstromSensorChannel):
         super().__init__(sensor_channel.device, f"S{sensor_channel.index}")
         self._attributes: dict[str, Any] = {}
-        self._state: int | None = None
+        self._state: float | None = None
         self.channel = sensor_channel
         self.index = sensor_channel.index
         self.set_type(sensor_channel.sensor_type)
@@ -368,7 +369,9 @@ class DigitalstromSensor(SensorEntity, DigitalstromEntity):
             self.channel.register_update_callback(self.update_callback)
         )
 
-    def update_callback(self, state: float, raw_state: float = None) -> None:
+    def update_callback(
+        self, state: float | None, raw_state: float | None = None
+    ) -> None:
         if not self.enabled:
             return
         if state is None:
@@ -384,7 +387,7 @@ class DigitalstromSensor(SensorEntity, DigitalstromEntity):
         pass
 
     @property
-    def native_value(self) -> str:
+    def native_value(self) -> float | None:
         """Return the state of the sensor."""
         return self._state
 
@@ -392,13 +395,13 @@ class DigitalstromSensor(SensorEntity, DigitalstromEntity):
 class DigitalstromMeterSensor(SensorEntity):
     def __init__(self, sensor_channel: DigitalstromMeterSensorChannel):
         self.channel = sensor_channel
-        self.circuit = sensor_channel.device
+        self.circuit = sensor_channel.circuit
         self._attr_unique_id: str = f"{self.circuit.dsuid}_{self.channel.index}"
         self.entity_id = f"{DOMAIN}.{self._attr_unique_id}"
         self._attr_should_poll = True
         self._has_state = False
         self._attributes: dict[str, Any] = {}
-        self._state: int | None = None
+        self._state: float | None = None
         self.entity_id = f"{DOMAIN}.{self.circuit.dsuid}_{self.channel.index}"
         self._state = None
         self._attr_has_entity_name = True
@@ -433,11 +436,11 @@ class DigitalstromMeterSensor(SensorEntity):
         return self.circuit.available
 
     @property
-    def native_value(self) -> str:
+    def native_value(self) -> float | None:
         """Return the state of the sensor."""
         return self._state
 
-    async def async_update(self, **kwargs) -> None:
+    async def async_update(self, **kwargs: Any) -> None:
         value = await self.channel.get_value()
         if self.channel.index == "energy" and value is not None:
             self._state = value / 3600000

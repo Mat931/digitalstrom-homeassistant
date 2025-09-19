@@ -67,7 +67,7 @@ class DigitalstromCover(CoverEntity, DigitalstromEntity):
     def __init__(
         self,
         position_channel: DigitalstromOutputChannel,
-        tilt_channel: DigitalstromOutputChannel = None,
+        tilt_channel: DigitalstromOutputChannel | None = None,
     ):
         super().__init__(position_channel.device, f"O{position_channel.index}")
         self._attr_supported_features = (
@@ -102,7 +102,7 @@ class DigitalstromCover(CoverEntity, DigitalstromEntity):
             self.position_channel.register_update_callback(self.update_callback)
         )
 
-    def update_callback(self, state, raw_state=None) -> None:
+    def update_callback(self, state: Any, raw_state: Any = None) -> None:
         pass
 
     async def async_will_remove_from_hass(self) -> None:
@@ -156,7 +156,9 @@ class DigitalstromCover(CoverEntity, DigitalstromEntity):
 
         None is unknown, 0 is closed, 100 is fully open.
         """
-        return self.position_channel.last_value
+        if self.position_channel.last_value is None:
+            return None
+        return round(self.position_channel.last_value)
 
     @property
     def is_closed(self) -> bool | None:
@@ -178,23 +180,23 @@ class DigitalstromCover(CoverEntity, DigitalstromEntity):
 
         None is unknown, 0 is closed, 100 is fully open.
         """
-        return None if self.tilt_channel is None else self.tilt_channel.last_value
+        if self.tilt_channel is None or self.tilt_channel.last_value is None:
+            return None
+        return round(self.tilt_channel.last_value)
 
     @property
-    def _fully_open_tilt(self) -> int:
+    def _fully_open_tilt(self) -> int | None:
         """Return value that represents fully opened tilt."""
         return None if self.tilt_channel is None else 100
 
     @property
-    def _fully_closed_tilt(self) -> int:
+    def _fully_closed_tilt(self) -> int | None:
         """Return value that represents fully closed tilt."""
         return None if self.tilt_channel is None else 0
 
     @property
-    def _tilt_range(self) -> int:
+    def _tilt_range(self) -> int | None:
         """Return range between fully opened and fully closed tilt."""
-        return (
-            None
-            if self.tilt_channel is None
-            else self._fully_open_tilt() - self._fully_closed_tilt()
-        )
+        if self._fully_open_tilt is None or self._fully_closed_tilt is None:
+            return None
+        return self._fully_open_tilt - self._fully_closed_tilt

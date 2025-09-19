@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -18,6 +19,7 @@ from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.typing import ConfigType
 
 from .api.apartment import DigitalstromApartment
 from .api.client import DigitalstromClient
@@ -41,7 +43,7 @@ PLATFORMS: list[Platform] = [
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
-async def async_setup(hass: HomeAssistantType, config: ConfigType) -> bool:
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """
     load configuration for digitalSTROM component
     """
@@ -84,7 +86,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    async def start_watchdog(event=None):
+    async def start_watchdog(event: Any = None) -> None:
         """Start websocket watchdog."""
         if "watchdog" not in hass.data[DOMAIN][entry.data[CONF_DSUID]]:
             hass.data[DOMAIN][entry.data[CONF_DSUID]]["watchdog"] = (
@@ -96,7 +98,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 )
             )
 
-    async def stop_watchdog(event=None):
+    async def stop_watchdog(event: Any = None) -> None:
         await async_unload_entry(hass, entry)
 
     # If Home Assistant is already in a running state, start the watchdog
@@ -127,7 +129,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def async_remove_config_entry_device(
-    hass: HomeAssistant, config_entry: AugustConfigEntry, device_entry: dr.DeviceEntry
+    hass: HomeAssistant, config_entry: ConfigEntry, device_entry: dr.DeviceEntry
 ) -> bool:
     """Remove config entry from a device if it's no longer present."""
     return True

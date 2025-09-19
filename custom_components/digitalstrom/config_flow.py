@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import logging
 from collections import OrderedDict
+from collections.abc import Mapping
 from typing import Any
 from urllib.parse import urlparse
 
 import voluptuous as vol
-from homeassistant import config_entries
 from homeassistant.components import ssdp, zeroconf
+from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult
 from homeassistant.const import (
     CONF_HOST,
     CONF_PASSWORD,
@@ -18,7 +19,6 @@ from homeassistant.const import (
     CONF_USERNAME,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import FlowResult
 
 from .api.client import DigitalstromClient
 from .api.exceptions import (
@@ -46,7 +46,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
 
-    result = {}
+    result: dict[str, Any] = {}
 
     ssl = data.get("ssl", True)
     if ssl == IGNORE_SSL_VERIFICATION:
@@ -68,18 +68,18 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
         )
     else:
         _LOGGER.debug("Testing login.")
-        if not await client.test_login():
+        if not await client.test_login(data[CONF_USERNAME], data[CONF_PASSWORD]):
             raise InvalidAuth
 
     return result
 
 
-class DigitalstromConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class DigitalstromConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for digitalSTROM."""
 
     VERSION = 1
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
         self._host: str = DEFAULT_HOST
         self._port: int = DEFAULT_PORT
         self._user: str = DEFAULT_USERNAME
@@ -92,7 +92,7 @@ class DigitalstromConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Handle the initial step."""
         errors: dict[str, str] = {}
         if user_input is not None:
@@ -165,7 +165,7 @@ class DigitalstromConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_zeroconf(
         self, discovery_info: zeroconf.ZeroconfServiceInfo
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Handle zeroconf discovery."""
 
         self._name = discovery_info.hostname.removesuffix(".local.")
@@ -173,7 +173,9 @@ class DigitalstromConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return await self.async_step_discovery_()
 
-    async def async_step_ssdp(self, discovery_info: ssdp.SsdpServiceInfo) -> FlowResult:
+    async def async_step_ssdp(
+        self, discovery_info: ssdp.SsdpServiceInfo
+    ) -> ConfigFlowResult:
         """Handle ssdp discovery."""
 
         result = urlparse(discovery_info.ssdp_location)
@@ -183,7 +185,7 @@ class DigitalstromConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return await self.async_step_discovery_()
 
-    async def async_step_discovery_(self) -> FlowResult:
+    async def async_step_discovery_(self) -> ConfigFlowResult:
         """Handle discovery."""
         client = DigitalstromClient(
             host=self._host, port=self._port, ssl=False, loop=self.hass.loop
@@ -195,7 +197,9 @@ class DigitalstromConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return await self.async_step_user()
 
-    async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> FlowResult:
+    async def async_step_reauth(
+        self, entry_data: Mapping[str, Any]
+    ) -> ConfigFlowResult:
         """Handle a flow initialized by a reauth event."""
         self._existing_entry = self.hass.config_entries.async_get_entry(
             self.context["entry_id"]
@@ -213,7 +217,7 @@ class DigitalstromConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_reconfigure(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Add reconfigure step to allow to reconfigure a config entry."""
         self._existing_entry = self.hass.config_entries.async_get_entry(
             self.context["entry_id"]

@@ -88,7 +88,7 @@ class DigitalstromButtonEvent(EventEntity, DigitalstromEntity):
             self._attr_translation_placeholders["group"] = str(self.group)
 
     @callback
-    def update_callback(self, event: str, extra_data: dict = None) -> None:
+    def update_callback(self, event: str, extra_data: dict[str, int]) -> None:
         if not self.enabled:
             return
         if event == "button":
