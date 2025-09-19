@@ -103,12 +103,10 @@ class DigitalstromCover(CoverEntity, DigitalstromEntity):
             self.position_channel.register_update_callback(self.update_callback)
         )
 
-    def update_callback(self, state: Any, raw_state: Any = None) -> None:
-        pass
-
-    async def async_will_remove_from_hass(self) -> None:
-        # self.device.client.unregister_event_callback(self.event_callback)
-        pass
+    def update_callback(self, state, raw_state=None) -> None:
+        if not self.enabled:
+            return
+        self.async_write_ha_state()
 
     async def async_open_cover(self, **kwargs: Any) -> None:
         """Open cover."""
@@ -147,10 +145,7 @@ class DigitalstromCover(CoverEntity, DigitalstromEntity):
             await self.tilt_channel.set_value(kwargs[ATTR_TILT_POSITION])
 
     async def async_update(self, **kwargs: Any) -> None:
-        # await self.device.output_channels_get_values(self.used_channels)
-        await self.position_channel.get_value()
-        if self.tilt_channel is not None:
-            await self.tilt_channel.get_value()
+        await self.device.output_channels_get_values(self.used_channels)
 
     @property
     def current_cover_position(self) -> int | None:

@@ -47,6 +47,7 @@ class DigitalstromDevice:
         self.availability_callbacks: list[Callable] = []
         self.reading_power_state_unsupported = False
         self.unique_device_names: list[str] = []
+        self.output_channel_log_count = 0
 
     def get_parent(self) -> Self:
         if self.parent_device is not None and self.parent_device != self:
@@ -114,7 +115,11 @@ class DigitalstromDevice:
         result = await self.client.request(
             f"device/getOutputChannelValue?dsuid={self.dsuid}&channels={channel_values_str}"
         )
-
+        if self.output_channel_log_count < 100:
+            self.output_channel_log_count += 1
+            self.apartment.logger.debug(
+                f"device/getOutputChannelValue?dsuid={self.dsuid}&channels={channel_values_str} {result}"
+            )
         if (result_channels := result.get("channels")) is not None:
             for channel in result_channels:
                 channel_id = channel.get("channel")
@@ -127,18 +132,6 @@ class DigitalstromDevice:
                 output_channel.last_value = result_channel_values.get(
                     output_channel.channel_type, None
                 )
-
-    async def get_power_state(self) -> float | None:
-        if self.reading_power_state_unsupported:
-            return None
-        try:
-            result = await self.client.request(
-                f"property/getFloating?path=/apartment/zones/zone{self.zone_id}/devices/{self.dsuid}/status/outputs/powerState/targetValue"
-            )
-            return result.get("value", None)
-        except ServerError:
-            self.reading_power_state_unsupported = True
-        return None
 
     async def call_scene(self, scene: int, force: bool = False) -> None:
         force_str = "&force=true" if force else ""
