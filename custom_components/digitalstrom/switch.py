@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 
 from homeassistant.components.switch import SwitchEntity
@@ -10,12 +10,16 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .api.channel import DigitalstromOutputChannel
 from .api.scene import DigitalstromApartmentScene
-from .const import DOMAIN
+from .const import (
+    APARTMENT_SCENE_UPDATE_INTERVAL,
+    APARTMENT_SCENE_UPDATE_INTERVAL_IF_CHANGED,
+    DOMAIN,
+)
 from .entity import DigitalstromEntity
 
 _LOGGER = logging.getLogger(__name__)
 
-SCAN_INTERVAL = timedelta(seconds=30)
+SCAN_INTERVAL = timedelta(seconds=30)  # TODO: 10 seconds
 PARALLEL_UPDATES = 1
 
 
@@ -100,7 +104,25 @@ class DigitalstromApartmentSceneSwitch(SwitchEntity):
         await self.scene.undo(self.scene.call_number == 90)
 
     async def async_update(self, **kwargs: Any) -> None:
-        await self.scene.get_value()
+        if self.scene.state_name is None:
+            return
+        do_update = False
+        timestamp = datetime.now()
+        if self.scene.force_update:
+            do_update = True
+        elif (
+            self.scene.last_update_timestamp == self.scene.last_change_timestamp
+            and self.scene.last_update_timestamp
+            < timestamp - APARTMENT_SCENE_UPDATE_INTERVAL_IF_CHANGED
+        ):
+            do_update = True
+        elif (
+            self.scene.last_update_timestamp
+            < timestamp - APARTMENT_SCENE_UPDATE_INTERVAL
+        ):
+            do_update = True
+        if do_update:
+            await self.scene.get_value()
 
     @property
     def device_info(self) -> DeviceInfo:

@@ -13,3 +13,6 @@ IGNORE_SSL_VERIFICATION = "ignore"
 DOMAIN = "digitalstrom"
 
 WEBSOCKET_WATCHDOG_INTERVAL = timedelta(seconds=10)
+
+APARTMENT_SCENE_UPDATE_INTERVAL = timedelta(seconds=59)
+APARTMENT_SCENE_UPDATE_INTERVAL_IF_CHANGED = timedelta(seconds=29)

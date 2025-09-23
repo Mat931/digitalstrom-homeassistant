@@ -217,6 +217,16 @@ class DigitalstromApartment:
                         device.button.update("call_group_scene", extra_data)
                         device.update_availability(True)
 
+            if name in ["callScene", "undoScene"]:
+                scene_id = int(data["properties"].get("sceneID", None))
+                if scene_id >= 64:
+                    for scene in self.scenes:
+                        if (
+                            scene_id in [scene.call_number, scene.undo_number]
+                            and scene.state_name is not None
+                        ):
+                            scene.force_update = True
+
             elif name == "buttonClick":
                 dsuid = data["source"]["dsid"]
                 button_index = int(data["properties"]["buttonIndex"])
