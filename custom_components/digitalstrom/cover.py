@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 from typing import Any
 
 from homeassistant.components.cover import (
@@ -17,6 +18,7 @@ from .entity import DigitalstromEntity
 
 _LOGGER = logging.getLogger(__name__)
 
+SCAN_INTERVAL = timedelta(seconds=60)
 PARALLEL_UPDATES = 1
 
 
