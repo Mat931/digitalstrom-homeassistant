@@ -68,7 +68,8 @@ class DigitalstromSwitch(SwitchEntity, DigitalstromEntity):
         await self.channel.set_value(0)
 
     async def async_update(self, **kwargs: Any) -> None:
-        await self.device.output_channels_get_values(["powerLevel"])
+        if self.available:
+            await self.device.output_channels_get_values(["powerLevel"])
 
 
 class DigitalstromApartmentSceneSwitch(SwitchEntity):

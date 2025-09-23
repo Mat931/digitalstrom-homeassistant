@@ -145,7 +145,8 @@ class DigitalstromCover(CoverEntity, DigitalstromEntity):
             await self.tilt_channel.set_value(kwargs[ATTR_TILT_POSITION])
 
     async def async_update(self, **kwargs: Any) -> None:
-        await self.device.output_channels_get_values(self.used_channels)
+        if self.available:
+            await self.device.output_channels_get_values(self.used_channels)
 
     @property
     def current_cover_position(self) -> int | None:

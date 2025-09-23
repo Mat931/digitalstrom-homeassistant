@@ -165,7 +165,8 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
         await self.brightness_channel.set_value(0)
 
     async def async_update(self, **kwargs: Any) -> None:
-        await self.device.output_channels_get_values(self.used_channels)
+        if self.available:
+            await self.device.output_channels_get_values(self.used_channels)
 
     @property
     def is_on(self) -> bool | None:
