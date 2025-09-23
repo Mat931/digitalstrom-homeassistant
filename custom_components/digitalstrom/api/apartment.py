@@ -170,16 +170,21 @@ class DigitalstromApartment:
                 ):
                     if state == "unknown":
                         device.update_availability(False)
+                        # TODO: clear output channels last_value
                     else:
                         device.update_availability(True)
 
             elif name == "DeviceEvent":
                 if (
-                    (data["properties"]["action"] == "ready")
+                    (action := data["properties"]["action"])
                     and (dsuid := data["source"].get("dsid"))
                     and (device := self.devices.get(dsuid))
                 ):
-                    device.update_availability(True)
+                    if action == "ready":
+                        device.update_availability(True)
+                    if action == "removed":
+                        device.update_availability(False)
+                        # TODO: clear output channels
 
             elif name in ["callScene", "callSceneBus"]:
                 dsuid = data["properties"].get(
