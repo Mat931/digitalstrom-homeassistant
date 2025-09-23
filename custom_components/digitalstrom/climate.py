@@ -28,7 +28,7 @@ from homeassistant.helpers.update_coordinator import (
 from .api.apartment import DigitalstromApartment
 from .api.exceptions import InvalidAuth
 from .api.zone import DigitalstromZone
-from .const import CONF_DSUID, DOMAIN
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -74,8 +74,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the climate platform."""
-    client = hass.data[DOMAIN][config_entry.data[CONF_DSUID]]["client"]
-    apartment = hass.data[DOMAIN][config_entry.data[CONF_DSUID]]["apartment"]
+    apartment = hass.data[DOMAIN][config_entry.unique_id]["apartment"]
     coordinator = DigitalstromClimateCoordinator(hass, apartment)
     await coordinator.async_config_entry_first_refresh()
     climate_entities = []

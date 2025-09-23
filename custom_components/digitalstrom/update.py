@@ -13,7 +13,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .api.circuit import DigitalstromCircuit
-from .const import CONF_DSUID, DOMAIN
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the update platform."""
-    apartment = hass.data[DOMAIN][config_entry.data[CONF_DSUID]]["apartment"]
+    apartment = hass.data[DOMAIN][config_entry.unique_id]["apartment"]
     update_entities = []
     for circuit in apartment.circuits.values():
         update_entities.append(DigitalstromUpdateEntity(circuit))

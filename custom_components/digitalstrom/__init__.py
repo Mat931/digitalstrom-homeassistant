@@ -15,7 +15,11 @@ from homeassistant.const import (
     Platform,
 )
 from homeassistant.core import CoreState, HomeAssistant
-from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+from homeassistant.exceptions import (
+    ConfigEntryAuthFailed,
+    ConfigEntryError,
+    ConfigEntryNotReady,
+)
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.event import async_track_time_interval
@@ -72,10 +76,35 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     client.set_app_token(entry.data[CONF_TOKEN])
 
     try:
-        apartment = DigitalstromApartment(client, entry.data[CONF_DSUID])
-        hass.data[DOMAIN].setdefault(entry.data[CONF_DSUID], dict())
-        hass.data[DOMAIN][entry.data[CONF_DSUID]]["client"] = client
-        hass.data[DOMAIN][entry.data[CONF_DSUID]]["apartment"] = apartment
+        system_dsuid = await client.get_system_dsuid()
+        if len(system_dsuid) < 8:  # 34
+            raise ConfigEntryError("Invalid system DSUID received")
+        if system_dsuid != entry.unique_id:
+            _LOGGER.warning(
+                f"Your system DSUID changed from {entry.unique_id} to {system_dsuid}"
+            )
+
+            if (
+                hass.config_entries.async_entry_for_domain_unique_id(
+                    DOMAIN, system_dsuid
+                )
+                is not None
+            ):
+                _LOGGER.error(f"Multiple config entries found for DSUID {system_dsuid}")
+                raise ConfigEntryError(
+                    translation_key="config_entry_error_multiple_entries_for_dsuid",
+                    translation_placeholders={"dsuid": system_dsuid},
+                )
+            else:
+                new_data = dict(entry.data)
+                new_data[CONF_DSUID] = system_dsuid
+                hass.config_entries.async_update_entry(
+                    entry, data=new_data, unique_id=system_dsuid
+                )
+        apartment = DigitalstromApartment(client, system_dsuid)
+        hass.data[DOMAIN].setdefault(entry.unique_id, dict())
+        hass.data[DOMAIN][entry.unique_id]["client"] = client
+        hass.data[DOMAIN][entry.unique_id]["apartment"] = apartment
         await apartment.get_zones()
         await apartment.get_circuits()
         await apartment.get_devices()
@@ -88,14 +117,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def start_watchdog(event: Any = None) -> None:
         """Start websocket watchdog."""
-        if "watchdog" not in hass.data[DOMAIN][entry.data[CONF_DSUID]]:
-            hass.data[DOMAIN][entry.data[CONF_DSUID]]["watchdog"] = (
-                async_track_time_interval(
-                    hass,
-                    client.event_listener_watchdog,
-                    WEBSOCKET_WATCHDOG_INTERVAL,
-                    cancel_on_shutdown=True,
-                )
+        if "watchdog" not in hass.data[DOMAIN][entry.unique_id]:
+            hass.data[DOMAIN][entry.unique_id]["watchdog"] = async_track_time_interval(
+                hass,
+                client.event_listener_watchdog,
+                WEBSOCKET_WATCHDOG_INTERVAL,
+                cancel_on_shutdown=True,
             )
 
     async def stop_watchdog(event: Any = None) -> None:
@@ -118,13 +145,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        if entry.data[CONF_DSUID] in hass.data[DOMAIN] and (
-            (remove_watchdog := hass.data[DOMAIN][entry.data[CONF_DSUID]]["watchdog"])
+        if entry.unique_id in hass.data[DOMAIN] and (
+            (remove_watchdog := hass.data[DOMAIN][entry.unique_id]["watchdog"])
             is not None
         ):
             remove_watchdog()
-        await hass.data[DOMAIN][entry.data[CONF_DSUID]]["client"].stop_event_listener()
-        hass.data[DOMAIN].pop(entry.data[CONF_DSUID])
+        await hass.data[DOMAIN][entry.unique_id]["client"].stop_event_listener()
+        hass.data[DOMAIN].pop(entry.unique_id)
     return unload_ok
 
 

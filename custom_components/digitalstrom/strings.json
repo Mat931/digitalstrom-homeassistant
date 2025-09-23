@@ -23,6 +23,11 @@
       "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]"
     }
   },
+  "exceptions": {
+    "config_entry_error_multiple_entries_for_dsuid": {
+      "message": "Multiple config entries for the same dSS found. Please delete all entries except this one and restart Home Assistant. (DSUID={dsuid})"
+    }
+  },
   "entity": {
     "binary_sensor": {
       "unknown_binary_input": {

@@ -465,5 +465,10 @@
                 "name": "Luftverschmutzung"
             }
         }
+    },
+    "exceptions": {
+        "config_entry_error_multiple_entries_for_dsuid": {
+            "message": "Mehrere Konfigurationseinträge für den selben dSS gefunden. Bitte alle Einträge außer diesem löschen und Home Assistant neu starten. (DSUID={dsuid})"
+        }
     }
 }

@@ -48,18 +48,30 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 
     result: dict[str, Any] = {}
 
-    ssl = data.get("ssl", True)
+    ssl = data.get(CONF_SSL, True)
     if ssl == IGNORE_SSL_VERIFICATION:
         ssl = False
-        result["ssl"] = False
+        result[CONF_SSL] = False
 
     client = DigitalstromClient(
-        host=data["host"], port=data["port"], ssl=ssl, loop=hass.loop
+        host=data[CONF_HOST], port=data[CONF_PORT], ssl=ssl, loop=hass.loop
     )
 
-    result[CONF_DSUID] = await client.get_system_dsuid()
+    app_token_valid = False
 
-    if CONF_TOKEN not in data.keys():
+    if CONF_TOKEN in data.keys() and data[CONF_TOKEN] is not None:
+        _LOGGER.debug("Testing app token.")
+        try:
+            client.set_app_token(data[CONF_TOKEN])
+            session_token = await client.request_session_token()
+            assert len(session_token) >= 8  # 64
+            app_token_valid = True
+            result[CONF_TOKEN] = data[CONF_TOKEN]
+        except Exception as e:
+            _LOGGER.debug(f"App token invalid: {e}")
+            client.set_app_token(None)
+
+    if not app_token_valid:
         _LOGGER.debug("Requesting app token.")
         result[CONF_TOKEN] = await client.request_app_token(
             data[CONF_USERNAME],
@@ -85,7 +97,7 @@ class DigitalstromConfigFlow(ConfigFlow, domain=DOMAIN):
         self._user: str = DEFAULT_USERNAME
         self._password: str = ""
         self._ssl: str | bool | None = None
-        self._dsuid: str | None = None
+        self._token: str | None = None
         self._name = "digitalSTROM"
         self._existing_entry: ConfigEntry | None = None
         super().__init__(*args, **kwargs)
@@ -101,43 +113,21 @@ class DigitalstromConfigFlow(ConfigFlow, domain=DOMAIN):
             self._user = user_input.get(CONF_USERNAME, self._user)
             self._password = user_input.get(CONF_PASSWORD, self._password)
             self._ssl = user_input.get(CONF_SSL, self._ssl)
-            self._dsuid = user_input.get(CONF_DSUID, self._dsuid)
 
             if self._ssl == "":
                 self._ssl = None
             if type(self._ssl) is bool and not self._ssl:
                 self._ssl = IGNORE_SSL_VERIFICATION
-            if self._dsuid == "":
-                self._dsuid = None
 
-            if self._dsuid is None:
-                try:
-                    temp_client = DigitalstromClient(self._host, self._port, False)
-                    self._dsuid = await temp_client.get_system_dsuid()
-                except CannotConnect:
-                    pass
-
-            await self.async_set_unique_id(self._dsuid)
-            if self._existing_entry is None:
-                self._abort_if_unique_id_configured()
-
+            ssl = user_input.get(CONF_SSL, True)
+            if ssl == IGNORE_SSL_VERIFICATION:
+                ssl = False
+            dsuid = None
             try:
-                info = await validate_input(self.hass, user_input)
-                user_input.update(info)
-                if self._existing_entry is not None:
-                    self.hass.config_entries.async_update_entry(
-                        self._existing_entry, data=user_input
-                    )
-                    # Reload the config entry to notify of updated config
-                    self.hass.async_create_task(
-                        self.hass.config_entries.async_reload(
-                            self._existing_entry.entry_id
-                        )
-                    )
-
-                    return self.async_abort(reason="reauth_successful")
-
-                return self.async_create_entry(title=self._name, data=user_input)
+                client = DigitalstromClient(self._host, self._port, ssl, self.hass.loop)
+                dsuid = await client.get_system_dsuid()
+                await self.async_set_unique_id(dsuid)
+                user_input[CONF_DSUID] = dsuid
             except CannotConnect:
                 errors["base"] = "cannot_connect"
             except InvalidAuth:
@@ -146,9 +136,39 @@ class DigitalstromConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "invalid_certificate"
             except InvalidFingerprint:
                 errors["base"] = "invalid_fingerprint"
-            except Exception:  # pylint: disable=broad-except
-                _LOGGER.exception("Unexpected exception")
-                errors["base"] = "unknown"
+
+            if self._existing_entry is None:
+                self._abort_if_unique_id_configured()
+
+            if dsuid is not None:
+                try:
+                    user_input[CONF_TOKEN] = self._token
+                    info = await validate_input(self.hass, user_input)
+                    user_input.update(info)
+                    if self._existing_entry is not None:
+                        self.hass.config_entries.async_update_entry(
+                            self._existing_entry, data=user_input
+                        )
+                        # Reload the config entry to notify of updated config
+                        self.hass.async_create_task(
+                            self.hass.config_entries.async_reload(
+                                self._existing_entry.entry_id
+                            )
+                        )
+                        return self.async_abort(reason="reauth_successful")
+
+                    return self.async_create_entry(title=self._name, data=user_input)
+                except CannotConnect:
+                    errors["base"] = "cannot_connect"
+                except InvalidAuth:
+                    errors["base"] = "invalid_auth"
+                except InvalidCertificate:
+                    errors["base"] = "invalid_certificate"
+                except InvalidFingerprint:
+                    errors["base"] = "invalid_fingerprint"
+                except Exception as e:  # pylint: disable=broad-except
+                    _LOGGER.exception("Unexpected exception: {e}")
+                    errors["base"] = "unknown"
 
         fields: dict[Any, type] = OrderedDict()
         fields[vol.Required(CONF_HOST, default=self._host or vol.UNDEFINED)] = str
@@ -212,7 +232,7 @@ class DigitalstromConfigFlow(ConfigFlow, domain=DOMAIN):
         self._ssl = entry_data.get(CONF_SSL, self._ssl)
         if type(self._ssl) is bool and not self._ssl:
             self._ssl = IGNORE_SSL_VERIFICATION
-        self._dsuid = entry_data.get(CONF_DSUID, self._dsuid)
+        self._token = entry_data.get(CONF_TOKEN, self._token)
         return await self.async_step_user()
 
     async def async_step_reconfigure(
@@ -233,5 +253,5 @@ class DigitalstromConfigFlow(ConfigFlow, domain=DOMAIN):
             self._ssl = self._existing_entry.data.get(CONF_SSL, self._ssl)
             if type(self._ssl) is bool and not self._ssl:
                 self._ssl = IGNORE_SSL_VERIFICATION
-            self._dsuid = self._existing_entry.data.get(CONF_DSUID, self._dsuid)
+        self._token = self._existing_entry.data.get(CONF_TOKEN, self._token)
         return await self.async_step_user(user_input)

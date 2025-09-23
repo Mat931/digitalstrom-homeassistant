@@ -465,5 +465,10 @@
                 "name": "Pollution"
             }
         }
+    },
+    "exceptions": {
+        "config_entry_error_multiple_entries_for_dsuid": {
+            "message": "Multiple config entries for the same dSS found. Please delete all entries except this one and restart Home Assistant. (DSUID={dsuid})"
+        }
     }
 }

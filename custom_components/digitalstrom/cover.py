@@ -12,7 +12,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .api.channel import DigitalstromOutputChannel
-from .const import CONF_DSUID, DOMAIN
+from .const import DOMAIN
 from .entity import DigitalstromEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -26,8 +26,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the cover platform."""
-    client = hass.data[DOMAIN][config_entry.data[CONF_DSUID]]["client"]
-    apartment = hass.data[DOMAIN][config_entry.data[CONF_DSUID]]["apartment"]
+    apartment = hass.data[DOMAIN][config_entry.unique_id]["apartment"]
     covers = []
     for device in apartment.devices.values():
         position_outdoor = None
@@ -103,7 +102,7 @@ class DigitalstromCover(CoverEntity, DigitalstromEntity):
             self.position_channel.register_update_callback(self.update_callback)
         )
 
-    def update_callback(self, state, raw_state=None) -> None:
+    def update_callback(self, state: Any, raw_state: Any = None) -> None:
         if not self.enabled:
             return
         self.async_write_ha_state()

@@ -9,7 +9,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .api.channel import DigitalstromOutputChannel
 from .api.scene import DigitalstromApartmentScene
-from .const import CONF_DSUID, DOMAIN
+from .const import DOMAIN
 from .entity import DigitalstromEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -23,8 +23,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the switch platform."""
-    client = hass.data[DOMAIN][config_entry.data[CONF_DSUID]]["client"]
-    apartment = hass.data[DOMAIN][config_entry.data[CONF_DSUID]]["apartment"]
+    apartment = hass.data[DOMAIN][config_entry.unique_id]["apartment"]
 
     switches = []
     for device in apartment.devices.values():

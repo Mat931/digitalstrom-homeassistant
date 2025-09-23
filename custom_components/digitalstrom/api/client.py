@@ -95,7 +95,7 @@ class DigitalstromClient:
             except aiohttp.ClientError as e:
                 raise CannotConnect(e) from None
 
-    async def _request_session_token(self) -> str:
+    async def request_session_token(self) -> str:
         data = await self._request_raw(
             f"system/loginApplication?loginToken={self._app_token}"
         )
@@ -133,7 +133,7 @@ class DigitalstromClient:
         )
         return "token" in data.keys()
 
-    def set_app_token(self, app_token: str) -> None:
+    def set_app_token(self, app_token: str | None) -> None:
         # Re-use the app token from a previous login, returned by request_app_token
         self._app_token = app_token
 
@@ -148,7 +148,7 @@ class DigitalstromClient:
         if (self.last_request is None) or (
             self.last_request < time.time() - SESSION_TOKEN_TIMEOUT
         ):
-            self._session_token = await self._request_session_token()
+            self._session_token = await self.request_session_token()
         data = await self._request_raw(url, dict(token=self._session_token))
         self.last_request = time.time()
         return data
@@ -175,7 +175,7 @@ class DigitalstromClient:
             await self.stop_event_listener()
         self._ws = aiohttp.ClientSession(
             connector=aiohttp.TCPConnector(family=socket.AF_INET, ssl=self.ssl),
-            cookies=dict(token=await self._request_session_token()),
+            cookies=dict(token=await self.request_session_token()),
             loop=self._loop,
         )
         try:
