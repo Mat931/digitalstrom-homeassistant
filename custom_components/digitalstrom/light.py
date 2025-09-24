@@ -118,17 +118,21 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
         """Turn the entity on."""
 
         self.device.output_channels_clear_prepared_values()
-        binary_light = True
 
-        if (brightness := kwargs.get(ATTR_BRIGHTNESS)) is not None:
+        if not self.dimmable:
+            self.brightness_channel.prepare_value(100)
+        elif (brightness := kwargs.get(ATTR_BRIGHTNESS)) is not None:
             self.brightness_channel.prepare_value(brightness / 2.55)
-            binary_light = False
+        elif (
+            self.brightness_channel.last_value is None
+            or self.brightness_channel.last_value < 1
+        ):
+            self.brightness_channel.prepare_value(100)
 
         if (
             color_temp_k := kwargs.get(ATTR_COLOR_TEMP_KELVIN)
         ) is not None and self.color_temp_channel is not None:
             self.color_temp_channel.prepare_value(1000000 / color_temp_k)
-            binary_light = False
             if ColorMode.COLOR_TEMP in self._attr_supported_color_modes:
                 self.last_color_mode = ColorMode.COLOR_TEMP
 
@@ -140,7 +144,6 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
             color_x, color_y = xy_color
             self.x_channel.prepare_value(color_x)
             self.y_channel.prepare_value(color_y)
-            binary_light = False
             if ColorMode.XY in self._attr_supported_color_modes:
                 self.last_color_mode = ColorMode.XY
 
@@ -152,12 +155,8 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
             hue, saturation = hs_color
             self.hue_channel.prepare_value(hue)
             self.saturation_channel.prepare_value(saturation)
-            binary_light = False
             if ColorMode.HS in self._attr_supported_color_modes:
                 self.last_color_mode = ColorMode.HS
-
-        if binary_light:
-            self.brightness_channel.prepare_value(100)
 
         await self.device.output_channels_set_prepared_values()
 
@@ -186,7 +185,11 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
     @property
     def color_temp_kelvin(self) -> int | None:
         """Return the CT color value in Kelvin."""
-        if self.color_temp_channel is None or self.color_temp_channel.last_value is None or self.color_temp_channel.last_value == 0:
+        if (
+            self.color_temp_channel is None
+            or self.color_temp_channel.last_value is None
+            or self.color_temp_channel.last_value == 0
+        ):
             return None
         return round(1000000 / self.color_temp_channel.last_value)
 
