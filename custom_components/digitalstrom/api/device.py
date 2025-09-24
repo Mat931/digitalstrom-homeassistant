@@ -45,7 +45,7 @@ class DigitalstromDevice:
         self.parent_device: Self | None = None
         self.available = False
         self.availability_callbacks: list[Callable] = []
-        self.reading_power_state_unsupported = False
+        self.reading_power_state_supported: bool | None = None
         self.unique_device_names: list[str] = []
         self.output_channel_log_count = 0
 
@@ -132,6 +132,20 @@ class DigitalstromDevice:
                 output_channel.last_value = result_channel_values.get(
                     output_channel.channel_type, None
                 )
+
+    async def get_power_state(self) -> float | None:
+        if self.reading_power_state_supported == False:
+            return None
+        try:
+            result = await self.client.request(
+                f"property/getFloating?path=/apartment/zones/zone{self.zone_id}/devices/{self.dsuid}/status/outputs/powerState/targetValue"
+            )
+            self.reading_power_state_supported = True
+            return result.get("value", None)
+        except ServerError:
+            if self.reading_power_state_supported is None:
+                self.reading_power_state_supported = False
+        return None
 
     async def call_scene(self, scene: int, force: bool = False) -> None:
         force_str = "&force=true" if force else ""
