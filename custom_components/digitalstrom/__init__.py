@@ -22,6 +22,7 @@ from homeassistant.exceptions import (
 )
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.typing import ConfigType
 
@@ -96,11 +97,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     translation_placeholders={"dsuid": system_dsuid},
                 )
             else:
-                new_data = dict(entry.data)
-                new_data[CONF_DSUID] = system_dsuid
-                hass.config_entries.async_update_entry(
-                    entry, data=new_data, unique_id=system_dsuid
-                )
+                await migrate_system_dsuid(hass, entry, system_dsuid)
         apartment = DigitalstromApartment(client, system_dsuid)
         hass.data[DOMAIN].setdefault(entry.unique_id, dict())
         hass.data[DOMAIN][entry.unique_id]["client"] = client
@@ -160,3 +157,50 @@ async def async_remove_config_entry_device(
 ) -> bool:
     """Remove config entry from a device if it's no longer present."""
     return True
+
+
+async def migrate_system_dsuid(
+    hass: HomeAssistant, config_entry: ConfigEntry, new_dsuid: str
+) -> None:
+    old_dsuid = config_entry.unique_id
+    if old_dsuid is None or old_dsuid == new_dsuid or len(new_dsuid) < 8:
+        return
+
+    new_data = dict(config_entry.data)
+    new_data[CONF_DSUID] = new_dsuid
+    hass.config_entries.async_update_entry(
+        config_entry, data=new_data, unique_id=new_dsuid
+    )
+
+    entity_registry = er.async_get(hass)
+    device_registry = dr.async_get(hass)
+    device_entries = dr.async_entries_for_config_entry(
+        device_registry, config_entry_id=config_entry.entry_id
+    )
+    entity_entries = er.async_entries_for_config_entry(
+        entity_registry, config_entry_id=config_entry.entry_id
+    )
+    for dev in device_entries:
+        new_unique_id = None
+        for identifier in dev.identifiers:
+            domain, unique_id = identifier
+            if domain == DOMAIN and old_dsuid in unique_id:
+                new_unique_id = unique_id.replace(old_dsuid, new_dsuid)
+                _LOGGER.debug(
+                    f'Migrating identifier for device "{dev.name}": {unique_id} to {new_unique_id}'
+                )
+        if new_unique_id is not None:
+            device_registry.async_update_device(
+                dev.id, new_identifiers={(DOMAIN, new_unique_id)}
+            )
+    for ent in entity_entries:
+        if old_dsuid in ent.unique_id:
+            new_unique_id = ent.unique_id.replace(old_dsuid, new_dsuid)
+            name = ent.original_name if ent.name is None else ent.name
+            _LOGGER.debug(
+                f'Migrating unique_id for entity "{name}": {ent.unique_id} to {new_unique_id}'
+            )
+            entity_registry.async_update_entity(
+                ent.entity_id,
+                new_unique_id=ent.unique_id.replace(old_dsuid, new_dsuid),
+            )
