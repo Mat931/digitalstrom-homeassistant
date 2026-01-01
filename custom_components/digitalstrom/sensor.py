@@ -1,5 +1,5 @@
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -28,13 +28,19 @@ from homeassistant.const import (
     UnitOfVolumeFlowRate,
     UnitOfVolumetricFlux,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .api.channel import DigitalstromMeterSensorChannel, DigitalstromSensorChannel
+from .climate import DigitalstromClimateCoordinator
 from .const import DOMAIN
 from .entity import DigitalstromEntity
+
+if TYPE_CHECKING:
+    # Typing helper to avoid runtime import cycles when annotating zone references.
+    from .api.zone import DigitalstromZone
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -323,6 +329,19 @@ async def async_setup_entry(
 ) -> None:
     """Set up the sensor platform."""
     apartment = hass.data[DOMAIN][config_entry.unique_id]["apartment"]
+    data = hass.data[DOMAIN][config_entry.unique_id]
+    new_coordinator = False
+    climate_coordinator: DigitalstromClimateCoordinator | None = data.get(
+        "climate_coordinator"
+    )
+    if climate_coordinator is None:
+        # Create or reuse a shared climate coordinator so sensors can mirror climate state.
+        climate_coordinator = DigitalstromClimateCoordinator(hass, apartment)
+        data["climate_coordinator"] = climate_coordinator
+        new_coordinator = True
+    if new_coordinator:
+        # Kick off climate data refresh so the control value sensor has data from the start.
+        await climate_coordinator.async_config_entry_first_refresh()
     circuit_sensors = []
     for circuit in apartment.circuits.values():
         for sensor in circuit.sensors.values():
@@ -336,6 +355,16 @@ async def async_setup_entry(
             sensors.append(DigitalstromSensor(sensor))
     _LOGGER.debug("Adding %i sensors", len(sensors))
     async_add_entities(sensors)
+
+    zone_sensors: list[DigitalstromZoneControlValueSensor] = []
+    for zone in apartment.zones.values():
+        if zone.climate_control_mode == 1:
+            # Expose the PID control value as a dedicated sensor on the zone device.
+            zone_sensors.append(
+                DigitalstromZoneControlValueSensor(climate_coordinator, zone)
+            )
+    _LOGGER.debug("Adding %i zone control value sensors", len(zone_sensors))
+    async_add_entities(zone_sensors)
 
 
 class DigitalstromSensor(SensorEntity, DigitalstromEntity):
@@ -391,6 +420,59 @@ class DigitalstromSensor(SensorEntity, DigitalstromEntity):
     def native_value(self) -> float | None:
         """Return the state of the sensor."""
         return self._state
+
+
+class DigitalstromZoneControlValueSensor(CoordinatorEntity, SensorEntity):
+    # Dedicated sensor entity to surface the zone ControlValue alongside the climate entity.
+    def __init__(
+        self,
+        coordinator: DigitalstromClimateCoordinator,
+        zone: "DigitalstromZone",
+    ) -> None:
+        super().__init__(coordinator)
+        self.zone = zone
+        description = SENSORS_MAP[51]
+        # Reuse sensor map entry 51 to keep naming and units consistent with ControlValue.
+        self.entity_description = description
+        self._attr_has_entity_name = True
+        self._attr_translation_key = description.translation_key
+        self._attr_native_unit_of_measurement = description.native_unit_of_measurement
+        self._attr_device_class = description.device_class
+        self._attr_state_class = description.state_class
+        self._attr_unique_id = (
+            f"{self.zone.apartment.dsuid}_zone{self.zone.zone_id}_control_value"
+        )
+        self.entity_id = (
+            f"{DOMAIN}.{self.zone.apartment.dsuid}_zone{self.zone.zone_id}_control_value"
+        )
+        self._attr_suggested_display_precision = 1
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        # Attach the sensor to the same zone device as the climate entity.
+        return DeviceInfo(
+            identifiers={
+                (
+                    DOMAIN,
+                    f"{self.zone.apartment.dsuid}_zone{self.zone.zone_id}",
+                )
+            },
+            name=self.zone.name,
+            model="Zone",
+            manufacturer="digitalSTROM",
+            suggested_area=self.zone.name,
+            via_device=(DOMAIN, self.zone.apartment.dsuid),
+        )
+
+    @property
+    def native_value(self) -> float | None:
+        # Surface the current PID control value directly from the zone state.
+        return self.zone.control_value
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        # Refresh the sensor state whenever the climate coordinator pulls new zone data.
+        self.async_write_ha_state()
 
 
 class DigitalstromMeterSensor(SensorEntity):
