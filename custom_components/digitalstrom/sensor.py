@@ -1,5 +1,5 @@
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -38,6 +38,10 @@ from .api.zone import DigitalstromZone
 from .climate import DigitalstromClimateCoordinator
 from .const import DOMAIN
 from .entity import DigitalstromEntity
+
+if TYPE_CHECKING:
+    # Typing helper to avoid runtime import cycles when annotating zone references.
+    from .api.zone import DigitalstromZone
 
 _LOGGER = logging.getLogger(__name__)
 
