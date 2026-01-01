@@ -87,6 +87,9 @@ async def async_setup_entry(
             )
     _LOGGER.debug("Adding %i climate entities", len(climate_entities))
     async_add_entities(climate_entities)
+    if len(climate_entities) == 0:
+        _LOGGER.debug("No climate entities added, shutting down coordinator")
+        await coordinator.async_shutdown()
 
 
 class DigitalstromClimateCoordinator(DataUpdateCoordinator):
@@ -102,12 +105,13 @@ class DigitalstromClimateCoordinator(DataUpdateCoordinator):
         )
         self.apartment = apartment
 
-    async def _async_update_data(self) -> None:
+    async def _async_update_data(self) -> dict[str, Any]:
         try:
             async with async_timeout.timeout(10):
                 await self.apartment.get_zone_climate_data()
         except InvalidAuth as err:
             raise ConfigEntryAuthFailed from err
+        return {}
 
 
 class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):

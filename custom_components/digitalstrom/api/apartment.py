@@ -1,5 +1,5 @@
 import logging
-import time
+from datetime import datetime
 
 from .client import DigitalstromClient
 from .const import BUTTON_BUS_EVENT_TIMEOUT
@@ -39,6 +39,7 @@ class DigitalstromApartment:
         self.zones: dict[int, DigitalstromZone] = {}
         self.scenes = []
         self.logger = logging.getLogger("digitalstrom_api")
+        self.proxy_state_changed: datetime | None = None
         client.register_event_callback(self.event_callback)
         from .scene import DigitalstromApartmentScene
 
@@ -191,34 +192,36 @@ class DigitalstromApartment:
                     "originDSUID", data["source"].get("dsid", None)
                 )
                 if (device := self.devices.get(dsuid)) and (device.button is not None):
+                    ignore = False
                     if name == "callSceneBus":
-                        device.button.bus_event_received = time.time()
+                        device.button.bus_event_received = datetime.now()
                     elif (device.button.bus_event_received is not None) and (
                         device.button.bus_event_received
-                        > time.time() - BUTTON_BUS_EVENT_TIMEOUT
+                        > datetime.now() - BUTTON_BUS_EVENT_TIMEOUT
                     ):
                         self.logger.debug(f"Ignoring repeated event")
-                        return
-                    scene_id = data["properties"]["sceneID"]
-                    if data["source"]["isDevice"]:
-                        extra_data = {}
-                        extra_data["scene_id"] = scene_id
-                        device.button.update("call_device_scene", extra_data)
-                        device.update_availability(True)
-                    if (
-                        (data["source"]["isGroup"])
-                        and (group_id := data["source"].get("groupID"))
-                        and (zone_id := data["source"].get("zoneID"))
-                    ):
-                        extra_data = {}
-                        extra_data["scene_id"] = scene_id
-                        extra_data["group_id"] = group_id
-                        extra_data["zone_id"] = zone_id
-                        device.button.update("call_group_scene", extra_data)
-                        device.update_availability(True)
+                        ignore = True
+                    if not ignore:
+                        scene_id = data["properties"].get("sceneID")
+                        if data["source"]["isDevice"]:
+                            extra_data = {}
+                            extra_data["scene_id"] = scene_id
+                            device.button.update("call_device_scene", extra_data)
+                            device.update_availability(True)
+                        if (
+                            (data["source"]["isGroup"])
+                            and (group_id := data["source"].get("groupID"))
+                            and (zone_id := data["source"].get("zoneID"))
+                        ):
+                            extra_data = {}
+                            extra_data["scene_id"] = scene_id
+                            extra_data["group_id"] = group_id
+                            extra_data["zone_id"] = zone_id
+                            device.button.update("call_group_scene", extra_data)
+                            device.update_availability(True)
 
             if name in ["callScene", "undoScene"]:
-                scene_id = int(data["properties"].get("sceneID", None))
+                scene_id = int(data["properties"].get("sceneID"))
                 if scene_id >= 64:
                     for scene in self.scenes:
                         if (
@@ -243,11 +246,12 @@ class DigitalstromApartment:
                     device.button.update("button", extra_data)
                     device.update_availability(True)
 
-            # elif name == "apartmentProxyDeviceTimeout": # Cover reached end position
+            # elif name == "apartmentProxyDeviceTimeout":  # Cover reached end position
             #     if (dsuid := data["source"].get("dsid")) and (
             #         device := self.devices.get(dsuid)
             #     ):
             #         await device.output_channels_get_values() # TODO
-            # elif name == "apartmentProxyStateChanged":
-            #     # TODO: Update all output channels
-            #     pass
+
+            elif name == "apartmentProxyStateChanged":
+                self.proxy_state_changed = datetime.now()
+                # TODO: update all output channels

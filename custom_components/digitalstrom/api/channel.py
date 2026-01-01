@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from datetime import datetime
 
 from .circuit import DigitalstromCircuit
 from .device import DigitalstromDevice
@@ -86,7 +87,7 @@ class DigitalstromOutputChannel(DigitalstromChannel):
 class DigitalstromButtonChannel(DigitalstromChannel):
     def __init__(self, device: DigitalstromDevice):
         super().__init__(device, 0)
-        self.bus_event_received: float | None = None
+        self.bus_event_received: datetime | None = None
 
 
 class DigitalstromMeterSensorChannel(DigitalstromChannel):

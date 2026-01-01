@@ -3,9 +3,9 @@ import binascii
 import json
 import re
 import socket
-import time
 import urllib.parse
 from collections.abc import Awaitable, Callable
+from datetime import datetime
 from typing import Any
 
 import aiohttp
@@ -36,8 +36,8 @@ class DigitalstromClient:
         self.port = port
         self.ssl: str | bool | aiohttp.Fingerprint | None = None
         self._loop = loop
-        self.last_request: float | None = None
-        self.last_event: float | None = None
+        self.last_request: datetime | None = None
+        self.last_event: datetime | None = None
         self._app_token: str | None = None
         self._session_token: str | None = None
         self._ws: aiohttp.ClientSession | None = None
@@ -146,11 +146,11 @@ class DigitalstromClient:
         # Send an authenticated request to the server
         # Previous login via request_app_token or set_app_token is required
         if (self.last_request is None) or (
-            self.last_request < time.time() - SESSION_TOKEN_TIMEOUT
+            self.last_request < datetime.now() - SESSION_TOKEN_TIMEOUT
         ):
             self._session_token = await self.request_session_token()
         data = await self._request_raw(url, dict(token=self._session_token))
-        self.last_request = time.time()
+        self.last_request = datetime.now()
         return data
 
     def register_event_callback(
@@ -185,7 +185,7 @@ class DigitalstromClient:
                 async for msg in ws:
                     try:
                         if msg.type == aiohttp.WSMsgType.TEXT:
-                            self.last_event = time.time()
+                            self.last_event = datetime.now()
                             event = json.loads(msg.data)
                             if event.get("name"):
                                 for callback in self._event_callbacks:
@@ -212,7 +212,7 @@ class DigitalstromClient:
             and (not self._ws.closed)
             and (
                 (self.last_event is None)
-                or (self.last_event > time.time() - EVENT_LISTENER_TIMEOUT)
+                or (self.last_event > datetime.now() - EVENT_LISTENER_TIMEOUT)
             )
         )
 
