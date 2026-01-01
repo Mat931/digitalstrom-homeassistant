@@ -339,7 +339,7 @@ async def async_setup_entry(
         climate_coordinator = DigitalstromClimateCoordinator(hass, apartment)
         data["climate_coordinator"] = climate_coordinator
         new_coordinator = True
-    if new_coordinator:
+    if new_coordinator or climate_coordinator.last_update_success is None:
         # Kick off climate data refresh so the control value sensor has data from the start.
         await climate_coordinator.async_config_entry_first_refresh()
     circuit_sensors = []
@@ -446,6 +446,11 @@ class DigitalstromZoneControlValueSensor(CoordinatorEntity, SensorEntity):
             f"{DOMAIN}.{self.zone.apartment.dsuid}_zone{self.zone.zone_id}_control_value"
         )
         self._attr_suggested_display_precision = 1
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        # Write initial state immediately so the entity becomes visible with the latest control value.
+        self.async_write_ha_state()
 
     @property
     def device_info(self) -> DeviceInfo:
