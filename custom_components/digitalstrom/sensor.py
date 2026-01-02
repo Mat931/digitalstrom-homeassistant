@@ -330,6 +330,14 @@ async def async_setup_entry(
 ) -> None:
     """Set up the sensor platform."""
     apartment = hass.data[DOMAIN][config_entry.unique_id]["apartment"]
+    
+    sensors = []
+    for device in apartment.devices.values():
+        for sensor in device.sensors.values():
+            sensors.append(DigitalstromSensor(sensor))
+    _LOGGER.debug("Adding %i sensors", len(sensors))
+    async_add_entities(sensors)
+    
     zone_coordinator: DigitalstromClimateCoordinator | None = hass.data[DOMAIN][
         config_entry.unique_id
     ].get("climate_coordinator")
@@ -351,19 +359,13 @@ async def async_setup_entry(
             )
     _LOGGER.debug("Adding %i zone sensors", len(zone_sensors))
     async_add_entities(zone_sensors)
+    
     circuit_sensors = []
     for circuit in apartment.circuits.values():
         for sensor in circuit.sensors.values():
             circuit_sensors.append(DigitalstromMeterSensor(sensor))
     _LOGGER.debug("Adding %i circuit sensors", len(circuit_sensors))
     async_add_entities(circuit_sensors)
-
-    sensors = []
-    for device in apartment.devices.values():
-        for sensor in device.sensors.values():
-            sensors.append(DigitalstromSensor(sensor))
-    _LOGGER.debug("Adding %i sensors", len(sensors))
-    async_add_entities(sensors)
 
 class DigitalstromSensor(SensorEntity, DigitalstromEntity):
     def __init__(self, sensor_channel: DigitalstromSensorChannel):
@@ -474,7 +476,12 @@ class DigitalstromZoneControlValueSensor(
 class DigitalstromMeterSensor(SensorEntity):
     def __init__(self, sensor_channel: DigitalstromMeterSensorChannel):
         self.channel = sensor_channel
-        self.circuit = sensor_channel.circuit
+        # Older objects might miss the explicit `circuit` attribute; fall back to the
+        # base channel device reference and ensure the attribute is set for later use.
+        circuit = getattr(sensor_channel, "circuit", None) or sensor_channel.device
+        # Make sure downstream code sees the circuit attribute even if it was missing.
+        setattr(sensor_channel, "circuit", circuit)
+        self.circuit = circuit
         self._attr_unique_id: str = f"{self.circuit.dsuid}_{self.channel.index}"
         self.entity_id = f"{DOMAIN}.{self._attr_unique_id}"
         self._attr_should_poll = True
