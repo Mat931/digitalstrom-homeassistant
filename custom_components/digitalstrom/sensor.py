@@ -1,5 +1,5 @@
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -28,13 +28,20 @@ from homeassistant.const import (
     UnitOfVolumeFlowRate,
     UnitOfVolumetricFlux,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .api.channel import DigitalstromMeterSensorChannel, DigitalstromSensorChannel
+from .api.zone import DigitalstromZone
+from .climate import DigitalstromClimateCoordinator
 from .const import DOMAIN
 from .entity import DigitalstromEntity
+
+if TYPE_CHECKING:
+    # Typing helper to avoid runtime import cycles when annotating zone references.
+    from .api.zone import DigitalstromZone
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -323,20 +330,42 @@ async def async_setup_entry(
 ) -> None:
     """Set up the sensor platform."""
     apartment = hass.data[DOMAIN][config_entry.unique_id]["apartment"]
-    circuit_sensors = []
-    for circuit in apartment.circuits.values():
-        for sensor in circuit.sensors.values():
-            circuit_sensors.append(DigitalstromMeterSensor(sensor))
-    _LOGGER.debug("Adding %i circuit sensors", len(circuit_sensors))
-    async_add_entities(circuit_sensors)
-
+    
     sensors = []
     for device in apartment.devices.values():
         for sensor in device.sensors.values():
             sensors.append(DigitalstromSensor(sensor))
     _LOGGER.debug("Adding %i sensors", len(sensors))
     async_add_entities(sensors)
-
+    
+    zone_coordinator: DigitalstromClimateCoordinator | None = hass.data[DOMAIN][
+        config_entry.unique_id
+    ].get("climate_coordinator")
+    if zone_coordinator is None:
+        # Create a shared climate coordinator for zone state so sensor and climate stay aligned.
+        zone_coordinator = DigitalstromClimateCoordinator(hass, apartment)
+        hass.data[DOMAIN][config_entry.unique_id]["climate_coordinator"] = (
+            zone_coordinator
+        )
+        await zone_coordinator.async_config_entry_first_refresh()
+    else:
+        # Refresh existing coordinator to fetch latest control values before adding sensors.
+        await zone_coordinator.async_request_refresh()
+    zone_sensors: list[DigitalstromZoneControlValueSensor] = []
+    for zone in apartment.zones.values():
+        if zone.climate_control_mode == 1:
+            zone_sensors.append(
+                DigitalstromZoneControlValueSensor(zone_coordinator, zone)
+            )
+    _LOGGER.debug("Adding %i zone sensors", len(zone_sensors))
+    async_add_entities(zone_sensors)
+    
+    circuit_sensors = []
+    for circuit in apartment.circuits.values():
+        for sensor in circuit.sensors.values():
+            circuit_sensors.append(DigitalstromMeterSensor(sensor))
+    _LOGGER.debug("Adding %i circuit sensors", len(circuit_sensors))
+    async_add_entities(circuit_sensors)
 
 class DigitalstromSensor(SensorEntity, DigitalstromEntity):
     def __init__(self, sensor_channel: DigitalstromSensorChannel):
@@ -393,10 +422,66 @@ class DigitalstromSensor(SensorEntity, DigitalstromEntity):
         return self._state
 
 
+class DigitalstromZoneControlValueSensor(
+    CoordinatorEntity[DigitalstromClimateCoordinator], SensorEntity
+):
+    # Sensor entity that surfaces the zone PID control value using sensor map type 51.
+    def __init__(
+        self, coordinator: DigitalstromClimateCoordinator, zone: DigitalstromZone
+    ) -> None:
+        super().__init__(coordinator)
+        self.zone = zone
+        description = SENSORS_MAP[51]
+        # Reuse the sensor map description so naming and units stay consistent with type 51.
+        self.entity_description = description
+        self._attr_has_entity_name = True
+        self._attr_translation_key = description.translation_key
+        self._attr_unique_id = (
+            f"{self.zone.apartment.dsuid}_zone{self.zone.zone_id}_control_value"
+        )
+        self.entity_id = f"{DOMAIN}.{self._attr_unique_id}"
+        self._attr_native_unit_of_measurement = description.native_unit_of_measurement
+        self._attr_device_class = description.device_class
+        self._attr_state_class = description.state_class
+        self._attr_suggested_display_precision = 0
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        return DeviceInfo(
+            identifiers={
+                (
+                    DOMAIN,
+                    f"{self.zone.apartment.dsuid}_zone{self.zone.zone_id}",
+                )
+            },
+            name=self.zone.name,
+            model="Zone",
+            manufacturer="digitalSTROM",
+            suggested_area=self.zone.name,
+            via_device=(DOMAIN, self.zone.apartment.dsuid),
+        )
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the current control value."""
+        return self.zone.control_value
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        if not self.enabled:
+            return
+        self.async_write_ha_state()
+
+
 class DigitalstromMeterSensor(SensorEntity):
     def __init__(self, sensor_channel: DigitalstromMeterSensorChannel):
         self.channel = sensor_channel
-        self.circuit = sensor_channel.circuit
+        # Older objects might miss the explicit `circuit` attribute; fall back to the
+        # base channel device reference and ensure the attribute is set for later use.
+        circuit = getattr(sensor_channel, "circuit", None) or sensor_channel.device
+        # Make sure downstream code sees the circuit attribute even if it was missing.
+        setattr(sensor_channel, "circuit", circuit)
+        self.circuit = circuit
         self._attr_unique_id: str = f"{self.circuit.dsuid}_{self.channel.index}"
         self.entity_id = f"{DOMAIN}.{self._attr_unique_id}"
         self._attr_should_poll = True
