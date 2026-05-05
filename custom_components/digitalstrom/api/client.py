@@ -6,7 +6,7 @@ import re
 import socket
 import urllib.parse
 from collections.abc import Awaitable, Callable
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 import aiohttp
@@ -147,7 +147,8 @@ class DigitalstromClient:
         # Send an authenticated request to the server
         # Previous login via request_app_token or set_app_token is required
         if (self.last_request is None) or (
-            self.last_request < datetime.now() - SESSION_TOKEN_TIMEOUT
+            self.last_request
+            < datetime.now() - timedelta(seconds=SESSION_TOKEN_TIMEOUT)
         ):
             self._session_token = await self.request_session_token()
         data = await self._request_raw(url, dict(token=self._session_token))
