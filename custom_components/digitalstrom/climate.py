@@ -125,7 +125,7 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
         self._attr_unique_id: str = (
             f"{self.zone.apartment.dsuid}_zone{self.zone.zone_id}_climate"
         )
-        self.entity_id = f"{DOMAIN}.{self.zone.apartment.dsuid}_zone{self.zone.zone_id}"
+        self.entity_id = f"climate.{self.zone.apartment.dsuid}_zone{self.zone.zone_id}"
         self._attr_temperature_unit = UnitOfTemperature.CELSIUS
         self._attr_max_temp = 35
         self._attr_min_temp = 3

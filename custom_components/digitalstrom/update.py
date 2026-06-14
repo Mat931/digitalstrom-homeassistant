@@ -39,7 +39,7 @@ class DigitalstromUpdateEntity(UpdateEntity):
         """Initialize the update entity."""
         self.circuit = circuit
         self._attr_unique_id: str = f"{self.circuit.dsuid}_firmware"
-        self.entity_id = f"{DOMAIN}.{self._attr_unique_id}"
+        self.entity_id = f"update.{self._attr_unique_id}"
         self._attr_name = "Firmware"
         self._attr_has_entity_name = True
         self._attr_device_class = UpdateDeviceClass.FIRMWARE

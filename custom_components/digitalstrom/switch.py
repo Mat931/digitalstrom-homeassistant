@@ -55,7 +55,7 @@ class DigitalstromSwitch(SwitchEntity, DigitalstromEntity):
         self._attr_should_poll = True
         self.last_power_state: float | None = None
         self._attr_has_entity_name = False
-        self.entity_id = f"{DOMAIN}.{self.device.dsuid}_{channel.index}"
+        self.entity_id = f"switch.{self.device.dsuid}_{channel.index}"
         self._attr_name = self.device.name
 
     @property
@@ -83,9 +83,7 @@ class DigitalstromSwitch(SwitchEntity, DigitalstromEntity):
 class DigitalstromApartmentSceneSwitch(SwitchEntity):
     def __init__(self, apartment_scene: DigitalstromApartmentScene):
         self.scene = apartment_scene
-        self.entity_id = (
-            f"{DOMAIN}.{self.scene.apartment.dsuid}_{self.scene.call_number}"
-        )
+        self.entity_id = f"switch.{self.scene.apartment.dsuid}_{self.scene.call_number}"
         self._attr_has_entity_name = True
         self._attr_translation_key = self.scene.name.lower().replace(" ", "_")
         self._attr_should_poll = True

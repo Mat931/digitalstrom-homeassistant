@@ -196,7 +196,7 @@ class DigitalstromBinarySensor(BinarySensorEntity, DigitalstromEntity):
         self.index = binary_input_channel.index
         self.set_type(binary_input_channel.input_type)
         self._attr_suggested_display_precision = 1
-        self.entity_id = f"{DOMAIN}.{self.device.dsuid}_{self.index}"
+        self.entity_id = f"binary_sensor.{self.device.dsuid}_{self.index}"
 
     def set_type(self, sensor_type: int) -> None:
         self.sensor_type = sensor_type

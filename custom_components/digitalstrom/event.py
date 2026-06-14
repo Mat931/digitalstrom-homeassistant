@@ -64,7 +64,7 @@ class DigitalstromButtonEvent(EventEntity, DigitalstromEntity):
     def __init__(self, button: DigitalstromButtonChannel) -> None:
         super().__init__(button.device, "E")
         self.channel = button
-        self.group = button.device.button_group
+        self.button_group = button.device.button_group
         self._attr_device_class = EventDeviceClass.BUTTON
         self._attr_event_types = list(
             set(
@@ -72,11 +72,13 @@ class DigitalstromButtonEvent(EventEntity, DigitalstromEntity):
                 + list(BUTTON_PRESS_TYPES.values())
             )
         )
-        self.entity_id = f"{DOMAIN}.{self.device.dsuid}"
+        self.entity_id = f"event.{self.device.dsuid}"
         if not self.device.button_used:
             self._attr_entity_registry_enabled_default = False
         self._attr_has_entity_name = True
-        self._attr_translation_key = GROUP_MAP.get(self.group, "button_event_unknown")
+        self._attr_translation_key = GROUP_MAP.get(
+            self.button_group, "button_event_unknown"
+        )
         name = f" ({self.device.name})"
         if len(self.device.name) == 0:
             name = ""
@@ -84,7 +86,7 @@ class DigitalstromButtonEvent(EventEntity, DigitalstromEntity):
             name = ""
         self._attr_translation_placeholders = {"name": name}
         if self._attr_translation_key == "button_event_unknown":
-            self._attr_translation_placeholders["group"] = str(self.group)
+            self._attr_translation_placeholders["group"] = str(self.button_group)
 
     @callback
     def update_callback(self, event: str, extra_data: dict[str, int]) -> None:

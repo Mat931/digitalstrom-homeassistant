@@ -87,7 +87,7 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
         self.client = self.device.client
         self.dimmable = self.device.output_dimmable
         self._attr_should_poll = True
-        self.entity_id = f"{DOMAIN}.{self.device.dsuid}_{brightness_channel.index}"
+        self.entity_id = f"light.{self.device.dsuid}_{brightness_channel.index}"
         self._attr_name = self.device.name
         self._attr_min_color_temp_kelvin = DEFAULT_MIN_KELVIN
         self._attr_max_color_temp_kelvin = DEFAULT_MAX_KELVIN

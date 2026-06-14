@@ -9,7 +9,6 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .api.scene import DigitalstromZoneScene
 from .const import DOMAIN
-from .entity import DigitalstromEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -102,7 +101,7 @@ async def async_setup_entry(
 class DigitalstromZoneSceneEntity(SceneEntity):
     def __init__(self, zone_scene: DigitalstromZoneScene):
         self.scene = zone_scene
-        self.entity_id = f"{DOMAIN}.{self.scene.zone.apartment.dsuid}_zone{self.scene.zone.zone_id}_group{self.scene.group}_scene{self.scene.number}"
+        self.entity_id = f"scene.{self.scene.zone.apartment.dsuid}_zone{self.scene.zone.zone_id}_group{self.scene.group}_scene{self.scene.number}"
         self._attr_has_entity_name = True
         if self.scene.name is not None:
             self._attr_translation_placeholders = {"name": self.scene.name}
