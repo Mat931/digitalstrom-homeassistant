@@ -49,14 +49,10 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """
-    load configuration for digitalSTROM component
-    """
-    # not configured
+    """Load configuration for digitalSTROM component."""
     if DOMAIN not in config:
         return True
 
-    # already imported
     if hass.config_entries.async_entries(DOMAIN):
         return True
 
@@ -78,8 +74,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     try:
         system_dsuid = await client.get_system_dsuid()
-        if len(system_dsuid) < 8:  # 34
+        if len(system_dsuid) < 8:
             raise ConfigEntryError("Invalid system DSUID received")
+
         if system_dsuid != entry.unique_id:
             _LOGGER.warning(
                 f"Your system DSUID changed from {entry.unique_id} to {system_dsuid}"
@@ -98,13 +95,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 )
             else:
                 await migrate_system_dsuid(hass, entry, system_dsuid)
+
         apartment = DigitalstromApartment(client, system_dsuid)
+
         hass.data[DOMAIN].setdefault(entry.unique_id, dict())
         hass.data[DOMAIN][entry.unique_id]["client"] = client
         hass.data[DOMAIN][entry.unique_id]["apartment"] = apartment
+        hass.data[DOMAIN][entry.unique_id]["hass"] = hass
+
         await apartment.get_zones()
         await apartment.get_circuits()
         await apartment.get_devices()
+
+        # 🔥 NEW: Event callback registrieren
+        client.set_event_callback(
+            lambda event: handle_digitalstrom_event(hass, entry.unique_id, event)
+        )
+
     except (InvalidAuth, InvalidCertificate) as ex:
         raise ConfigEntryAuthFailed(ex) from ex
     except (CannotConnect, ServerError) as ex:
@@ -125,8 +132,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def stop_watchdog(event: Any = None) -> None:
         await async_unload_entry(hass, entry)
 
-    # If Home Assistant is already in a running state, start the watchdog
-    # immediately, else trigger it after Home Assistant has finished starting.
     if hass.state == CoreState.running:
         await start_watchdog()
     else:
@@ -139,6 +144,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
+def handle_digitalstrom_event(
+    hass: HomeAssistant, entry_id: str, event: dict
+) -> None:
+    """Handle incoming digitalSTROM events."""
+
+    if event.get("name") == "callScene":
+        props = event.get("properties", {})
+
+        try:
+            hass.bus.async_fire(
+                "digitalstrom_scene",
+                {
+                    "scene": int(props.get("sceneID", -1)),
+                    "zone": int(props.get("zoneID", -1)),
+                    "group": int(props.get("groupID", -1)),
+                },
+            )
+        except Exception as e:
+            _LOGGER.error("Failed to process digitalSTROM event: %s", e)
+
+
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
@@ -147,8 +173,10 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             is not None
         ):
             remove_watchdog()
+
         await hass.data[DOMAIN][entry.unique_id]["client"].stop_event_listener()
         hass.data[DOMAIN].pop(entry.unique_id)
+
     return unload_ok
 
 
@@ -163,23 +191,27 @@ async def migrate_system_dsuid(
     hass: HomeAssistant, config_entry: ConfigEntry, new_dsuid: str
 ) -> None:
     old_dsuid = config_entry.unique_id
+
     if old_dsuid is None or old_dsuid == new_dsuid or len(new_dsuid) < 8:
         return
 
     new_data = dict(config_entry.data)
     new_data[CONF_DSUID] = new_dsuid
+
     hass.config_entries.async_update_entry(
         config_entry, data=new_data, unique_id=new_dsuid
     )
 
     entity_registry = er.async_get(hass)
     device_registry = dr.async_get(hass)
+
     device_entries = dr.async_entries_for_config_entry(
         device_registry, config_entry_id=config_entry.entry_id
     )
     entity_entries = er.async_entries_for_config_entry(
         entity_registry, config_entry_id=config_entry.entry_id
     )
+
     for dev in device_entries:
         new_unique_id = None
         for identifier in dev.identifiers:
@@ -193,6 +225,7 @@ async def migrate_system_dsuid(
             device_registry.async_update_device(
                 dev.id, new_identifiers={(DOMAIN, new_unique_id)}
             )
+
     for ent in entity_entries:
         if old_dsuid in ent.unique_id:
             new_unique_id = ent.unique_id.replace(old_dsuid, new_dsuid)

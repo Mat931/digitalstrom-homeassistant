@@ -1,11 +1,12 @@
 import asyncio
 import binascii
+import inspect
 import json
 import re
 import socket
 import urllib.parse
 from collections.abc import Awaitable, Callable
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 import aiohttp
@@ -41,7 +42,7 @@ class DigitalstromClient:
         self._app_token: str | None = None
         self._session_token: str | None = None
         self._ws: aiohttp.ClientSession | None = None
-        self._event_callbacks: list[Callable[[dict], Awaitable[None]]] = []
+        self._event_callbacks: list[Callable[[dict], Awaitable[None] | None]] = []
         if type(ssl) is bool:
             self.ssl = None if ssl else False
         elif type(ssl) is str:
@@ -146,7 +147,8 @@ class DigitalstromClient:
         # Send an authenticated request to the server
         # Previous login via request_app_token or set_app_token is required
         if (self.last_request is None) or (
-            self.last_request < datetime.now() - SESSION_TOKEN_TIMEOUT
+            self.last_request
+            < datetime.now() - timedelta(seconds=SESSION_TOKEN_TIMEOUT)
         ):
             self._session_token = await self.request_session_token()
         data = await self._request_raw(url, dict(token=self._session_token))
@@ -154,13 +156,19 @@ class DigitalstromClient:
         return data
 
     def register_event_callback(
-        self, callback: Callable[[dict], Awaitable[None]]
+        self, callback: Callable[[dict], Awaitable[None] | None]
     ) -> None:
         # Register an event callback
         self._event_callbacks.append(callback)
 
+    def set_event_callback(
+        self, callback: Callable[[dict], Awaitable[None] | None]
+    ) -> None:
+        # Register an event callback
+        self.register_event_callback(callback)
+
     def unregister_event_callback(
-        self, callback: Callable[[dict], Awaitable[None]]
+        self, callback: Callable[[dict], Awaitable[None] | None]
     ) -> None:
         # Unregister an event callback
         if callback in self._event_callbacks:
@@ -189,7 +197,9 @@ class DigitalstromClient:
                             event = json.loads(msg.data)
                             if event.get("name"):
                                 for callback in self._event_callbacks:
-                                    await callback(event)
+                                    result = callback(event)
+                                    if inspect.isawaitable(result):
+                                        await result
                         elif msg.type == aiohttp.WSMsgType.CLOSED:
                             break
                         elif msg.type == aiohttp.WSMsgType.ERROR:
