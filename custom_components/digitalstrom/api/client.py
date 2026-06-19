@@ -74,7 +74,9 @@ class DigitalstromClient:
                         raise ServerError(f"Failed to decode JSON: {e}") from None
                     if (is_ok := data.get("ok")) and is_ok:
                         if result := data.get("result"):
-                            return result
+                            if type(result) is dict:
+                                return result
+                            return {"result": result}
                         elif status := data.get("status"):
                             return {"status": status}
                         return {}

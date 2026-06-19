@@ -219,7 +219,7 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
         return (x, y)
 
     @property
-    def color_mode(self) -> str:
+    def color_mode(self) -> ColorMode | None:
         """Return the color mode of the light."""
         if len(self._attr_supported_color_modes) > 1:
             return self.last_color_mode

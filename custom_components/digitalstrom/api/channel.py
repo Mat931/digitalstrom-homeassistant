@@ -90,10 +90,10 @@ class DigitalstromButtonChannel(DigitalstromChannel):
         self.bus_event_received: datetime | None = None
 
 
-class DigitalstromMeterSensorChannel(DigitalstromChannel):
+class DigitalstromMeterSensorChannel:
     def __init__(self, circuit: DigitalstromCircuit, identifier: str):
-        super().__init__(circuit, identifier)
         self.circuit = circuit
+        self.index = identifier
 
     async def get_value(self) -> float | None:
         if not self.circuit.has_metering:

@@ -71,6 +71,6 @@ class DigitalstromCircuit:
     async def install_update(self) -> None:
         status = await self.update_available()
         if status == "update":
-            data = await self.client.request(
+            await self.client.request(
                 f"circuit/firmwareUpdate?dsuid={self.dsuid}&clearsettings=false"
             )

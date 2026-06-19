@@ -40,8 +40,8 @@ class DigitalstromDevice:
         self.output_channels: dict[int, DigitalstromOutputChannel] = {}
         self.button: DigitalstromButtonChannel | None = None
         self.meter_dsuid: str | None = None
-        self.dsuid_index = None
-        self.oem_part_number = None
+        self.dsuid_index: int | None = None
+        self.oem_part_number: int | None = None
         self.parent_device: Self | None = None
         self.available = False
         self.availability_callbacks: list[Callable] = []

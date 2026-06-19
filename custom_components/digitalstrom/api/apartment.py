@@ -87,6 +87,7 @@ class DigitalstromApartment:
 
     async def get_devices(self) -> dict:
         data = await self.client.request("apartment/getDevices")
+        data = data.get("result", [])
         self.logger.debug(f"getDevices {data}")
         for d in data:
             if (dsuid := d.get("dSUID")) and (len(dsuid) > 0):
