@@ -75,7 +75,11 @@ async def async_setup_entry(
 ) -> None:
     """Set up the climate platform."""
     apartment = hass.data[DOMAIN][config_entry.unique_id]["apartment"]
-    coordinator = DigitalstromClimateCoordinator(hass, apartment)
+    # Reuse a single coordinator across platforms so zone sensors and climate stay in sync.
+    coordinator = hass.data[DOMAIN][config_entry.unique_id].get("climate_coordinator")
+    if coordinator is None:
+        coordinator = DigitalstromClimateCoordinator(hass, apartment)
+        hass.data[DOMAIN][config_entry.unique_id]["climate_coordinator"] = coordinator
     await coordinator.async_config_entry_first_refresh()
     climate_entities = []
     for zone in apartment.zones.values():
