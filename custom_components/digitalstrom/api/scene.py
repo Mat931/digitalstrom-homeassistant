@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import override
 
 from .apartment import DigitalstromApartment
 from .exceptions import ServerError
@@ -37,10 +38,12 @@ class DigitalstromApartmentScene(DigitalstromScene):
         self.last_change_timestamp = datetime.now()
         self.force_update = True
 
+    @override
     async def call(self, force: bool = False) -> None:
         await self.apartment.call_scene(self.call_number, force)
         self.force_update = True
 
+    @override
     async def undo(self, force: bool = False) -> None:
         if self.undo_number is None:
             await self.apartment.undo_scene(self.call_number)
@@ -83,8 +86,10 @@ class DigitalstromZoneScene(DigitalstromScene):
         self.number = number
         self.group = group
 
+    @override
     async def call(self, force: bool = False) -> None:
         await self.zone.call_scene(self.number, self.group, force)
 
+    @override
     async def undo(self) -> None:
         await self.zone.undo_scene(self.number, self.group)

@@ -97,6 +97,36 @@ class DigitalstromClient:
             except aiohttp.ClientError as e:
                 raise CannotConnect(e) from None
 
+    async def _request_raw_new(self, url: str, cookies: dict | None = None) -> dict:
+        if type(self.ssl) is not bool and type(self.ssl) is not aiohttp.Fingerprint:
+            raise InvalidFingerprint()
+        async with aiohttp.ClientSession(
+            connector=aiohttp.TCPConnector(family=socket.AF_INET, ssl=self.ssl),
+            cookies=cookies,
+            loop=self._loop,
+        ) as session:
+            try:
+                async with session.get(
+                    url=f"https://{self.host}:{self.port}/{url}"
+                ) as response:
+                    if response.status not in [200, 403, 500]:
+                        raise ServerError(
+                            f"Unexpected status code received: {response.status}"
+                        )
+                    try:
+                        data = await response.json()
+                        if type(data) is dict:
+                            return data
+                        return {"result": data}
+                    except json.decoder.JSONDecodeError as e:
+                        raise ServerError(f"Failed to decode JSON: {e}") from None
+            except aiohttp.client_exceptions.ServerFingerprintMismatch as e:
+                raise InvalidCertificate(e) from None
+            except aiohttp.client_exceptions.ClientConnectorCertificateError as e:
+                raise InvalidCertificate(e) from None
+            except aiohttp.ClientError as e:
+                raise CannotConnect(e) from None
+
     async def request_session_token(self) -> str:
         data = await self._request_raw(
             f"system/loginApplication?loginToken={self._app_token}"
@@ -152,6 +182,17 @@ class DigitalstromClient:
         ):
             self._session_token = await self.request_session_token()
         data = await self._request_raw(url, dict(token=self._session_token))
+        self.last_request = datetime.now()
+        return data
+
+    async def request_new(self, url: str) -> dict:
+        # Send an authenticated request to the server
+        # Previous login via request_app_token or set_app_token is required
+        if (self.last_request is None) or (
+            self.last_request < datetime.now() - SESSION_TOKEN_TIMEOUT
+        ):
+            self._session_token = await self.request_session_token()
+        data = await self._request_raw_new(url, dict(token=self._session_token))
         self.last_request = datetime.now()
         return data
 

@@ -1,5 +1,6 @@
 import re
 from collections.abc import Callable
+from datetime import datetime
 from typing import Self
 
 from .apartment import DigitalstromApartment
@@ -275,3 +276,39 @@ class DigitalstromDevice:
                         self.output_channels[index] = DigitalstromOutputChannel(
                             self, index, channel_id, channel_name, channel_type
                         )
+
+    def update_device_status(self, data: dict) -> None:
+        """Updates the status of outputs (brightness, ...) using data from the new API"""
+        if data.get("type") != "dsDeviceStatus":
+            return
+        attributes = data.get("attributes", {})
+        function_blocks = attributes.get("functionBlocks", [])
+        for function_block in function_blocks:
+            function_block_dsuid = function_block.get("id")
+            if function_block_dsuid != self.dsuid:
+                continue
+            outputs = function_block.get("outputs", [])
+            for output in outputs:
+                channel_id = output.get("id")
+                status = output.get("status")
+                initial_value = output.get("initialValue")
+                target_value = output.get("targetValue")
+                start_time = output.get("startedAt")
+                end_time = output.get("terminatesAt")
+                if channel_id is not None and target_value is not None:
+                    for output_channel in self.output_channels.values():
+                        if output_channel.channel_id == channel_id:
+                            output_channel.target_value = target_value
+                            if (
+                                status == "moving"
+                                and initial_value is not None
+                                and start_time is not None
+                                and end_time is not None
+                            ):
+                                output_channel.initial_value = initial_value
+                                output_channel.start_time = datetime.strptime(
+                                    start_time, "%Y-%m-%dT%H:%M:%S.%fZ"
+                                )
+                                output_channel.end_time = datetime.strptime(
+                                    end_time, "%Y-%m-%dT%H:%M:%S.%fZ"
+                                )

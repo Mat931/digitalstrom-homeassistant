@@ -1,8 +1,9 @@
 import logging
 from datetime import timedelta
-from typing import Any
+from typing import Any, override
 
 import async_timeout
+
 from homeassistant.components.climate import (
     ATTR_HVAC_MODE,
     PRESET_AWAY,
@@ -14,12 +15,11 @@ from homeassistant.components.climate import (
     HVACAction,
     HVACMode,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, PRECISION_TENTHS, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
@@ -29,6 +29,7 @@ from .api.apartment import DigitalstromApartment
 from .api.exceptions import InvalidAuth
 from .api.zone import DigitalstromZone
 from .const import DOMAIN
+from .coordinator import DigitalstromConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -70,11 +71,11 @@ PRESET_TO_SCENE: dict[str, int] = {
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: DigitalstromConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the climate platform."""
-    apartment = hass.data[DOMAIN][config_entry.unique_id]["apartment"]
+    apartment = hass.data[DOMAIN][entry.unique_id]["apartment"]
     coordinator = DigitalstromClimateCoordinator(hass, apartment)
     await coordinator.async_config_entry_first_refresh()
     climate_entities = []
@@ -105,6 +106,7 @@ class DigitalstromClimateCoordinator(DataUpdateCoordinator):
         )
         self.apartment = apartment
 
+    @override
     async def _async_update_data(self) -> dict[str, Any]:
         try:
             async with async_timeout.timeout(10):
@@ -146,6 +148,7 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
         self._target_climate_operation_mode: int | None = None
 
     @property
+    @override
     def hvac_mode(self) -> HVACMode | None:
         """Return current operation ie. heat, cool, idle."""
         if self.zone.climate_operation_mode in [0, 7, 9]:
@@ -157,6 +160,7 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
         return None
 
     @property
+    @override
     def hvac_action(self) -> HVACAction | None:
         """Return the current running hvac operation."""
         if self.zone.control_value == 0:
@@ -166,16 +170,19 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
         return HVACAction.COOLING
 
     @property
+    @override
     def preset_mode(self) -> str | None:
         """Return current preset mode."""
         return ID_TO_PRESET.get(self.zone.climate_operation_mode, None)
 
     @property
+    @override
     def current_temperature(self) -> float | None:
         """Return the current temperature."""
         return self.zone.current_temperature
 
     @property
+    @override
     def target_temperature(self) -> float | None:
         """Return the temperature we try to reach."""
         return self.zone.target_temperature
@@ -211,6 +218,7 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
         await self.zone.call_scene(climate_operation_mode, 48)
         await self.coordinator.async_request_refresh()
 
+    @override
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature (and operation mode if set)."""
         _LOGGER.debug(
@@ -232,6 +240,7 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
             )
         await self._async_set_climate_operation_mode(new_climate_operation_mode)
 
+    @override
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new operation mode."""
         _LOGGER.debug(
@@ -242,6 +251,7 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
         )
         await self._async_set_climate_operation_mode(new_climate_operation_mode)
 
+    @override
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set preset mode."""
         _LOGGER.debug(
@@ -256,6 +266,7 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
             scene_id += 9
         await self._async_set_climate_operation_mode(scene_id)
 
+    @override
     async def async_turn_on(self) -> None:
         """Turn the entity on."""
         _LOGGER.debug(f"async_turn_on ({self.zone.climate_operation_mode})")
@@ -264,6 +275,7 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
         elif self.zone.climate_operation_mode in [0, 9]:
             await self.async_set_preset_mode(PRESET_ECO)
 
+    @override
     async def async_turn_off(self) -> None:
         """Turn the entity off."""
         _LOGGER.debug(f"async_turn_off ({self.zone.climate_operation_mode})")
@@ -273,6 +285,7 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
             await self.async_set_preset_mode(PRESET_OFF)
 
     @callback
+    @override
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
         if not self.enabled:
@@ -281,6 +294,7 @@ class DigitalstromClimateEntity(CoordinatorEntity, ClimateEntity):
         self.async_write_ha_state()
 
     @property
+    @override
     def device_info(self) -> DeviceInfo:
         return DeviceInfo(
             identifiers={

@@ -5,11 +5,12 @@ from __future__ import annotations
 import logging
 from collections import OrderedDict
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, override
 from urllib.parse import urlparse
 
 import voluptuous as vol
-from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult
+
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import (
     CONF_HOST,
     CONF_PASSWORD,
@@ -37,6 +38,7 @@ from .const import (
     DOMAIN,
     IGNORE_SSL_VERIFICATION,
 )
+from .coordinator import DigitalstromConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -100,9 +102,10 @@ class DigitalstromConfigFlow(ConfigFlow, domain=DOMAIN):
         self._ssl: str | bool | None = None
         self._token: str | None = None
         self._name = "digitalSTROM"
-        self._existing_entry: ConfigEntry | None = None
+        self._existing_entry: DigitalstromConfigEntry | None = None
         super().__init__(*args, **kwargs)
 
+    @override
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -184,6 +187,7 @@ class DigitalstromConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="user", data_schema=vol.Schema(fields), errors=errors
         )
 
+    @override
     async def async_step_zeroconf(
         self, discovery_info: ZeroconfServiceInfo
     ) -> ConfigFlowResult:
@@ -194,6 +198,7 @@ class DigitalstromConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return await self.async_step_discovery_()
 
+    @override
     async def async_step_ssdp(
         self, discovery_info: SsdpServiceInfo
     ) -> ConfigFlowResult:

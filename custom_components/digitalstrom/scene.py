@@ -1,14 +1,14 @@
 import logging
-from typing import Any
+from typing import Any, override
 
 from homeassistant.components.scene import Scene as SceneEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .api.scene import DigitalstromZoneScene
 from .const import DOMAIN
+from .coordinator import DigitalstromConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -84,11 +84,11 @@ SCENE_TO_PRESET_MAP: dict[int, int] = {
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: DigitalstromConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the switch platform."""
-    apartment = hass.data[DOMAIN][config_entry.unique_id]["apartment"]
+    apartment = hass.data[DOMAIN][entry.unique_id]["apartment"]
 
     zone_scenes = []
     for zone in apartment.zones.values():
@@ -132,11 +132,13 @@ class DigitalstromZoneSceneEntity(SceneEntity):
             f"{self.scene.zone.apartment.dsuid}_zone{self.scene.zone.zone_id}_group{self.scene.group}_scene{self.scene.number}"
         )
 
+    @override
     async def async_activate(self, **kwargs: Any) -> None:
         """Turn the entity on."""
         await self.scene.call()
 
     @property
+    @override
     def device_info(self) -> DeviceInfo:
         return DeviceInfo(
             identifiers={

@@ -141,6 +141,28 @@ class DigitalstromApartment:
                     if zone_id in self.zones.keys():
                         self.zones[zone_id].load_climate_data_from_dict(z)
 
+    async def update_apartment_status(self) -> None:
+        """Uses the new API to fetch the apartment status"""
+        data = await self.client.request_new(
+            "api/v1/apartment/status?include=dsDevices,zones,userDefinedStates"
+        )
+        data = data.get("data", {})
+        if data.get("type") != "apartmentStatus":
+            return
+        included = data.get("included", {})
+        ds_devices = included.get("dsDevices", [])
+        # zones = included.get("zones", [])
+        # clusters = included.get("clusters", [])
+        # user_defined_states = included.get("userDefinedStates", [])
+        # attributes = data.get("attributes", {})
+        for device_data in ds_devices:
+            if (
+                device_data.get("type") == "dsDeviceStatus"
+                and (dsuid := device_data.get("id")) is not None
+            ):
+                if (device := self.devices.get(dsuid)) is not None:
+                    device.update_device_status(device_data)
+
     async def event_callback(self, data: dict) -> None:
         if name := data.get("name"):
             self.logger.debug(f"event {data}")

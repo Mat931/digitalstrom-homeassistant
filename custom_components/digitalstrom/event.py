@@ -1,12 +1,13 @@
 import logging
+from typing import override
 
 from homeassistant.components.event import EventDeviceClass, EventEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .api.channel import DigitalstromButtonChannel
 from .const import DOMAIN
+from .coordinator import DigitalstromConfigEntry
 from .entity import DigitalstromEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -47,11 +48,11 @@ GROUP_MAP: dict[int, str] = {
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: DigitalstromConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the event platform."""
-    apartment = hass.data[DOMAIN][config_entry.unique_id]["apartment"]
+    apartment = hass.data[DOMAIN][entry.unique_id]["apartment"]
     events = []
     for device in apartment.devices.values():
         if device.button:
@@ -99,6 +100,7 @@ class DigitalstromButtonEvent(EventEntity, DigitalstromEntity):
         self._trigger_event(event, extra_data)
         self.async_write_ha_state()
 
+    @override
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
         self.async_on_remove(

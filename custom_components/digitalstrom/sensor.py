@@ -1,5 +1,5 @@
 import logging
-from typing import Any
+from typing import Any, override
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -7,7 +7,6 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONCENTRATION_PARTS_PER_MILLION,
     DEGREE,
@@ -30,10 +29,11 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .api.channel import DigitalstromMeterSensorChannel, DigitalstromSensorChannel
 from .const import DOMAIN
+from .coordinator import DigitalstromConfigEntry
 from .entity import DigitalstromEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -318,11 +318,11 @@ SENSORS_MAP: dict[int, SensorEntityDescription] = {
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: DigitalstromConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the sensor platform."""
-    apartment = hass.data[DOMAIN][config_entry.unique_id]["apartment"]
+    apartment = hass.data[DOMAIN][entry.unique_id]["apartment"]
     circuit_sensors = []
     for circuit in apartment.circuits.values():
         for sensor in circuit.sensors.values():
@@ -363,6 +363,7 @@ class DigitalstromSensor(SensorEntity, DigitalstromEntity):
         self._attr_device_class = self.entity_description.device_class
         self._attr_state_class = self.entity_description.state_class
 
+    @override
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
         self.update_callback(self.channel.last_value)
@@ -381,11 +382,13 @@ class DigitalstromSensor(SensorEntity, DigitalstromEntity):
         self._state = state
         self.async_write_ha_state()
 
+    @override
     async def async_will_remove_from_hass(self) -> None:
         # self.device.client.unregister_event_callback(self.event_callback)
         pass
 
     @property
+    @override
     def native_value(self) -> float | None:
         """Return the state of the sensor."""
         return self._state
@@ -418,6 +421,7 @@ class DigitalstromMeterSensor(SensorEntity):
             self._attr_suggested_display_precision = 3
 
     @property
+    @override
     def device_info(self) -> DeviceInfo:
         """Return the device info."""
         return DeviceInfo(
@@ -430,10 +434,12 @@ class DigitalstromMeterSensor(SensorEntity):
         )
 
     @property
+    @override
     def available(self) -> bool:
         return self.circuit.available
 
     @property
+    @override
     def native_value(self) -> float | None:
         """Return the state of the sensor."""
         return self._state

@@ -1,30 +1,30 @@
 import asyncio
 import logging
-from typing import Any
+from typing import Any, override
 
 from homeassistant.components.update import (
     UpdateDeviceClass,
     UpdateEntity,
     UpdateEntityFeature,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .api.circuit import DigitalstromCircuit
 from .const import DOMAIN
+from .coordinator import DigitalstromConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: DigitalstromConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the update platform."""
-    apartment = hass.data[DOMAIN][config_entry.unique_id]["apartment"]
+    apartment = hass.data[DOMAIN][entry.unique_id]["apartment"]
     update_entities = []
     for circuit in apartment.circuits.values():
         update_entities.append(DigitalstromUpdateEntity(circuit))
@@ -51,6 +51,7 @@ class DigitalstromUpdateEntity(UpdateEntity):
         self._attr_installed_version = self.circuit.sw_version
 
     @property
+    @override
     def device_info(self) -> DeviceInfo:
         """Return the device info."""
         return DeviceInfo(
@@ -63,9 +64,11 @@ class DigitalstromUpdateEntity(UpdateEntity):
         )
 
     @property
+    @override
     def available(self) -> bool:
         return self.circuit.available
 
+    @override
     async def async_install(
         self, version: str | None, backup: bool, **kwargs: Any
     ) -> None:
@@ -93,6 +96,7 @@ class DigitalstromUpdateEntity(UpdateEntity):
             "Needs Update" if status == "update" else self.circuit.sw_version
         )
 
+    @override
     async def async_release_notes(self) -> str | None:
         """Return the release notes."""
-        return f'This will attempt to install an update on the device "{self.circuit.name}".\n\nWarning: Updating devices through Home Assistant is experimental and wasn\'t tested on a real system. If there are any problems with the update process, please open an issue on [GitHub](https://github.com/Mat931/digitalstrom-homeassistant/issues).'
+        return f'This will attempt to install an update on the device "{self.circuit.name}".\n\nWarning: Updating devices through Home Assistant is experimental. If there are any problems with the update process, please open an issue on [GitHub](https://github.com/Mat931/digitalstrom-homeassistant/issues).'

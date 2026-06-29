@@ -1,6 +1,6 @@
 import logging
 from datetime import timedelta
-from typing import Any
+from typing import Any, override
 
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
@@ -12,27 +12,27 @@ from homeassistant.components.light import (
     ColorMode,
     LightEntity,
 )
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .api.channel import DigitalstromOutputChannel
 from .const import DOMAIN
-from .entity import DigitalstromEntity
+from .coordinator import DigitalstromApartmentStatusCoordinator, DigitalstromConfigEntry
+from .entity import DigitalstromCoordinatorEntity
 
 _LOGGER = logging.getLogger(__name__)
 
-SCAN_INTERVAL = timedelta(seconds=30)
-PARALLEL_UPDATES = 1
+PARALLEL_UPDATES = 0
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: DigitalstromConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the light platform."""
-    apartment = hass.data[DOMAIN][config_entry.unique_id]["apartment"]
+    apartment = hass.data[DOMAIN][entry.unique_id]["apartment"]
+    coordinator = entry.runtime_data
     lights = []
     for device in apartment.devices.values():
         brightness = None
@@ -57,16 +57,23 @@ async def async_setup_entry(
         if brightness is not None:
             lights.append(
                 DigitalstromLight(
-                    brightness, color_temp, hue, saturation, color_x, color_y
+                    coordinator,
+                    brightness,
+                    color_temp,
+                    hue,
+                    saturation,
+                    color_x,
+                    color_y,
                 )
             )
     _LOGGER.debug("Adding %i lights", len(lights))
     async_add_entities(lights)
 
 
-class DigitalstromLight(LightEntity, DigitalstromEntity):
+class DigitalstromLight(DigitalstromCoordinatorEntity, LightEntity):
     def __init__(
         self,
+        coordinator: DigitalstromApartmentStatusCoordinator,
         brightness_channel: DigitalstromOutputChannel,
         color_temp_channel: DigitalstromOutputChannel | None = None,
         hue_channel: DigitalstromOutputChannel | None = None,
@@ -74,8 +81,9 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
         x_channel: DigitalstromOutputChannel | None = None,
         y_channel: DigitalstromOutputChannel | None = None,
     ):
-        super().__init__(brightness_channel.device, f"O{brightness_channel.index}")
-
+        super().__init__(
+            coordinator, brightness_channel.device, f"O{brightness_channel.index}"
+        )
         self._attr_name = "Light"
         self.brightness_channel = brightness_channel
         self.color_temp_channel = color_temp_channel
@@ -86,7 +94,6 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
         self.device = brightness_channel.device
         self.client = self.device.client
         self.dimmable = self.device.output_dimmable
-        self._attr_should_poll = True
         self.entity_id = f"light.{self.device.dsuid}_{brightness_channel.index}"
         self._attr_name = self.device.name
         self._attr_min_color_temp_kelvin = DEFAULT_MIN_KELVIN
@@ -114,6 +121,7 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
         self.default_color_mode = color_modes[0]
         self.last_color_mode = color_modes[0]
 
+    @override
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
 
@@ -123,10 +131,7 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
             self.brightness_channel.prepare_value(100)
         elif (brightness := kwargs.get(ATTR_BRIGHTNESS)) is not None:
             self.brightness_channel.prepare_value(brightness / 2.55)
-        elif (
-            self.brightness_channel.last_value is None
-            or self.brightness_channel.last_value < 1
-        ):
+        elif (brightness := self.brightness_channel.value()) is None or brightness < 1:
             self.brightness_channel.prepare_value(100)
 
         if (
@@ -160,57 +165,59 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
 
         await self.device.output_channels_set_prepared_values()
 
+    @override
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
         await self.brightness_channel.set_value(0)
 
-    async def async_update(self, **kwargs: Any) -> None:
-        if self.available:
-            await self.device.output_channels_get_values(self.used_channels)
-
     @property
+    @override
     def is_on(self) -> bool | None:
         """Return true if the light is on."""
-        if self.brightness_channel.last_value is None:
+        if (brightness := self.brightness_channel.value()) is None:
             return None
-        return self.brightness_channel.last_value > 0
+        return brightness > 0
 
     @property
+    @override
     def brightness(self) -> int | None:
         """Return the brightness of a device."""
-        if self.brightness_channel.last_value is None:
+        if (brightness := self.brightness_channel.value()) is None:
             return None
-        return round(self.brightness_channel.last_value * 2.55)
+        return round(brightness * 2.55)
 
     @property
+    @override
     def color_temp_kelvin(self) -> int | None:
         """Return the CT color value in Kelvin."""
         if (
             self.color_temp_channel is None
-            or self.color_temp_channel.last_value is None
-            or self.color_temp_channel.last_value == 0
+            or (color_temp := self.color_temp_channel.value()) is None
+            or color_temp == 0
         ):
             return None
-        return round(1000000 / self.color_temp_channel.last_value)
+        return round(1000000 / color_temp)
 
     @property
+    @override
     def hs_color(self) -> tuple[float, float] | None:
         """Return the hs color."""
         if self.hue_channel is None or self.saturation_channel is None:
             return None
-        hue = self.hue_channel.last_value
-        saturation = self.saturation_channel.last_value
+        hue = self.hue_channel.value()
+        saturation = self.saturation_channel.value()
         if hue is None or saturation is None:
             return None
         return (hue, saturation)
 
     @property
+    @override
     def xy_color(self) -> tuple[float, float] | None:
         """Return the xy color value [float, float]."""
         if self.x_channel is None or self.y_channel is None:
             return None
-        x = self.x_channel.last_value
-        y = self.y_channel.last_value
+        x = self.x_channel.value()
+        y = self.y_channel.value()
         if x is None or y is None:
             return None
         if x > 1 or y > 1:
@@ -219,6 +226,7 @@ class DigitalstromLight(LightEntity, DigitalstromEntity):
         return (x, y)
 
     @property
+    @override
     def color_mode(self) -> ColorMode | None:
         """Return the color mode of the light."""
         if len(self._attr_supported_color_modes) > 1:

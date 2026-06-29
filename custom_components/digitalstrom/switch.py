@@ -1,12 +1,11 @@
 import logging
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, override
 
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .api.channel import DigitalstromOutputChannel
 from .api.scene import DigitalstromApartmentScene
@@ -15,21 +14,22 @@ from .const import (
     APARTMENT_SCENE_UPDATE_INTERVAL_IF_CHANGED,
     DOMAIN,
 )
+from .coordinator import DigitalstromConfigEntry
 from .entity import DigitalstromEntity
 
 _LOGGER = logging.getLogger(__name__)
 
-SCAN_INTERVAL = timedelta(seconds=30)  # TODO: 10 seconds
+SCAN_INTERVAL = timedelta(seconds=120)
 PARALLEL_UPDATES = 1
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: DigitalstromConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the switch platform."""
-    apartment = hass.data[DOMAIN][config_entry.unique_id]["apartment"]
+    apartment = hass.data[DOMAIN][entry.unique_id]["apartment"]
 
     switches = []
     for device in apartment.devices.values():
@@ -59,16 +59,19 @@ class DigitalstromSwitch(SwitchEntity, DigitalstromEntity):
         self._attr_name = self.device.name
 
     @property
+    @override
     def is_on(self) -> bool | None:
         """Return true if the switch is on."""
         if self.last_power_state is None:
             return None
         return self.last_power_state > 0
 
+    @override
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
         await self.channel.set_value(100)
 
+    @override
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
         await self.channel.set_value(0)
@@ -92,14 +95,17 @@ class DigitalstromApartmentSceneSwitch(SwitchEntity):
         )
 
     @property
+    @override
     def is_on(self) -> bool | None:
         """Return true if the switch is on."""
         return self.scene.last_value
 
+    @override
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
         await self.scene.call(self.scene.call_number == 90)
 
+    @override
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
         await self.scene.undo(self.scene.call_number == 90)
@@ -126,6 +132,7 @@ class DigitalstromApartmentSceneSwitch(SwitchEntity):
             await self.scene.get_value()
 
     @property
+    @override
     def device_info(self) -> DeviceInfo:
         return DeviceInfo(
             identifiers={(DOMAIN, self.scene.apartment.dsuid)},

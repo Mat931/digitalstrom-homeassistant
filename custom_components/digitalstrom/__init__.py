@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_HOST,
     CONF_PORT,
@@ -30,6 +29,7 @@ from .api.apartment import DigitalstromApartment
 from .api.client import DigitalstromClient
 from .api.exceptions import CannotConnect, InvalidAuth, InvalidCertificate, ServerError
 from .const import CONF_DSUID, CONF_SSL, DOMAIN, WEBSOCKET_WATCHDOG_INTERVAL
+from .coordinator import DigitalstromApartmentStatusCoordinator, DigitalstromConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -63,7 +63,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     return True
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_setup_entry(
+    hass: HomeAssistant, entry: DigitalstromConfigEntry
+) -> bool:
     """Set up digitalSTROM from a config entry."""
 
     hass.data.setdefault(DOMAIN, {})
@@ -105,6 +107,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await apartment.get_zones()
         await apartment.get_circuits()
         await apartment.get_devices()
+
+        coordinator = DigitalstromApartmentStatusCoordinator(
+            hass=hass,
+            entry=entry,
+            apartment=apartment,
+        )
+        await coordinator.async_config_entry_first_refresh()
+        entry.runtime_data = coordinator
+
     except (InvalidAuth, InvalidCertificate) as ex:
         raise ConfigEntryAuthFailed(ex) from ex
     except (CannotConnect, ServerError) as ex:
@@ -139,7 +150,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_unload_entry(
+    hass: HomeAssistant, entry: DigitalstromConfigEntry
+) -> bool:
     """Unload a config entry."""
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         if entry.unique_id in hass.data[DOMAIN] and (
@@ -153,14 +166,16 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def async_remove_config_entry_device(
-    hass: HomeAssistant, config_entry: ConfigEntry, device_entry: dr.DeviceEntry
+    hass: HomeAssistant,
+    config_entry: DigitalstromConfigEntry,
+    device_entry: dr.DeviceEntry,
 ) -> bool:
     """Remove config entry from a device if it's no longer present."""
     return True
 
 
 async def migrate_system_dsuid(
-    hass: HomeAssistant, config_entry: ConfigEntry, new_dsuid: str
+    hass: HomeAssistant, config_entry: DigitalstromConfigEntry, new_dsuid: str
 ) -> None:
     old_dsuid = config_entry.unique_id
     if old_dsuid is None or old_dsuid == new_dsuid or len(new_dsuid) < 8:
